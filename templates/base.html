@@ -3,41 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STERP Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>STERP Softwares Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">STERP Portal</a>
-            {% if user.is_authenticated %}
-            <div class="navbar-nav">
-                {% if user.is_superuser %}
-                <a class="nav-link" href="{% url 'admin_dashboard' %}">Admin Dashboard</a>
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <!-- Replace with your actual logo path -->
+                        <img class="h-15 w-auto" src="https://sterpclientportal.sterp.in/images/STERPLogo.png" alt="STERP Softwares">
+                    </div>
+                </div>
+                {% if user.is_authenticated %}
+                <div class="flex items-center space-x-4">
+                    {% if user.is_superuser %}
+                    <a href="{% url 'admin_dashboard' %}" class="text-gray-700 hover:text-blue-600">Dashboard</a>
+                    {% endif %}
+                    <a href="{% url 'employee_profile' %}" class="text-gray-700 hover:text-blue-600">Profile</a>
+                    <form method="post" action="{% url 'logout' %}" class="inline">
+                        {% csrf_token %}
+                        <button type="submit" class="text-gray-700 hover:text-red-600">Logout</button>
+                    </form>
+                </div>
                 {% endif %}
-                <a class="nav-link" href="{% url 'employee_profile' %}">Profile</a>
-                <form method="post" action="{% url 'logout' %}" class="d-inline">
-                    {% csrf_token %}
-                    <button type="submit" class="btn nav-link">Logout</button>
-                </form>
             </div>
-            {% endif %}
         </div>
     </nav>
 
-    <div class="container mt-4">
+    <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }}">
+                <div class="mb-4 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
                     {{ message }}
                 </div>
             {% endfor %}
         {% endif %}
         
-        {% block content %}
-        {% endblock %}
+        {% block content %}{% endblock %}
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
