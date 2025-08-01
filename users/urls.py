@@ -1,0 +1,11 @@
+from django.urls import path
+from django.contrib.auth import views as auth_views
+from . import views
+
+urlpatterns = [
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('create-employee/', views.create_employee, name='create_employee'),
+    path('profile/', views.employee_profile, name='employee_profile'),
+    path('login/', views.CustomLoginView.as_view(), name='login'),
+    path('logout/', auth_views.LogoutView.as_view(next_page='login', template_name='users/logout.html'), name='logout'),
+]
