@@ -1,16 +1,64 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<h2>Employee Profile</h2>
-<div class="card">
-    <div class="card-body">
-        <h5 class="card-title">{{ user.get_full_name }}</h5>
-        <p>Employee ID: {{ user.employee_id }}</p>
-        <p>Email: {{ user.email }}</p>
-        <p>Department: {{ user.department }}</p>
-        <p>Phone: {{ user.phone_number }}</p>
-        <p>Address: {{ user.address }}</p>
-        <p>Joining Date: {{ user.joining_date }}</p>
+<div class="max-w-4xl mx-auto">
+    <!-- Profile Header -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-32"></div>
+        <div class="relative px-4 pb-6">
+            <div class="relative -mt-16">
+                <div class="inline-block bg-blue-100 rounded-full p-4">
+                    <svg class="w-24 h-24 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                </div>
+            </div>
+            <div class="text-center">
+                <h1 class="text-2xl font-bold text-gray-900">{{ user.get_full_name }}</h1>
+                <p class="text-gray-600">{{ user.department }}</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Details -->
+    <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Employee Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Employee ID</label>
+                    <p class="mt-1 text-gray-900">{{ user.employee_id }}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Email</label>
+                    <p class="mt-1 text-gray-900">{{ user.email }}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Phone Number</label>
+                    <p class="mt-1 text-gray-900">{{ user.phone_number|default:"Not provided" }}</p>
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Department</label>
+                    <p class="mt-1 text-gray-900">{{ user.department }}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Date of Birth</label>
+                    <p class="mt-1 text-gray-900">{{ user.date_of_birth|date:"F d, Y"|default:"Not provided" }}</p>
+                </div>
+                <div>
+                    <label class="text-sm font-medium text-gray-500">Joining Date</label>
+                    <p class="mt-1 text-gray-900">{{ user.joining_date|date:"F d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Address -->
+    <div class="mt-6 bg-white rounded-lg shadow-md p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">Address</h2>
+        <p class="text-gray-700 whitespace-pre-line">{{ user.address|default:"Address not provided" }}</p>
     </div>
 </div>
 {% endblock %}

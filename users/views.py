@@ -45,3 +45,6 @@ class CustomLoginView(LoginView):
         if self.request.user.is_superuser:
             return '/admin-dashboard/'
         return '/profile/'
+
+def home(request):
+    return render(request, 'users/home.html')
