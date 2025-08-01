@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Employee Profile</h2>
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">{{ user.get_full_name }}</h5>
+        <p>Employee ID: {{ user.employee_id }}</p>
+        <p>Email: {{ user.email }}</p>
+        <p>Department: {{ user.department }}</p>
+        <p>Phone: {{ user.phone_number }}</p>
+        <p>Address: {{ user.address }}</p>
+        <p>Joining Date: {{ user.joining_date }}</p>
+    </div>
+</div>
+{% endblock %}
