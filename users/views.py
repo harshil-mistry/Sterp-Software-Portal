@@ -20,16 +20,11 @@ def create_employee(request):
     if request.method == 'POST':
         form = EmployeeCreationForm(request.POST)
         if form.is_valid():
-            cleaned_data = form.cleaned_data
-            name = cleaned_data.get('name')
-            email = cleaned_data.get('email')
-            print(name, email)
             form.save()
             messages.success(request, 'Employee created successfully!')
             return redirect('admin_dashboard')
         else:
-            messages.error(request, 'There was an error with the form. Please check the details below.')
-            print(form.errors)
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = EmployeeCreationForm()
     return render(request, 'users/create_employee.html', {'form': form})
