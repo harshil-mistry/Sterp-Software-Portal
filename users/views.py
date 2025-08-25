@@ -20,14 +20,23 @@ def create_employee(request):
     if request.method == 'POST':
         form = EmployeeCreationForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Employee created successfully!')
+            employee = form.save()
+            messages.success(request, f'Employee {employee.get_full_name()} created successfully! Login credentials have been sent to {employee.email}.')
             return redirect('admin_dashboard')
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
         form = EmployeeCreationForm()
     return render(request, 'users/create_employee.html', {'form': form})
+
+@login_required
+@user_passes_test(is_admin)
+def delete_employee(request, pk):
+    if request.method == 'POST':
+        employee = Employee.objects.get(pk=pk)
+        employee.delete()
+        messages.success(request, 'Employee deleted successfully!')
+        return redirect('admin_dashboard')
 
 @login_required
 def employee_profile(request):
@@ -40,6 +49,5 @@ class CustomLoginView(LoginView):
         if self.request.user.is_superuser:
             return '/admin-dashboard/'
         return '/profile/'
-
 def home(request):
     return render(request, 'users/home.html')
