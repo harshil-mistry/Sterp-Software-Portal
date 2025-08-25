@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Welcome to {{ company_name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px; }
+        .credentials { background: white; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea; margin: 20px 0; }
+        .footer { text-align: center; margin-top: 30px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Welcome to {{ company_name }}!</h1>
+        </div>
+        
+        <div class="content">
+            <h2>Hello {{ employee.get_full_name }},</h2>
+            
+            <p>Your employee account has been successfully created. Welcome to the team!</p>
+            
+            <div class="credentials">
+                <h3>Your Login Credentials:</h3>
+                <p><strong>Username:</strong> {{ employee.username }}</p>
+                <p><strong>Password:</strong> {{ password }}</p>
+                <p><strong>Employee ID:</strong> {{ employee.employee_id }}</p>
+            </div>
+            
+            <p><strong>Important:</strong> Please log in and change your password after your first login for security purposes.</p>
+            
+            <p>If you have any questions, please don't hesitate to contact the HR department.</p>
+            
+            <div class="footer">
+                <p>Best regards,<br>{{ company_name }} Team</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

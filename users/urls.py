@@ -9,4 +9,5 @@ urlpatterns = [
     path('profile/', views.employee_profile, name='employee_profile'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login', template_name='users/logout.html'), name='logout'),
+    path('delete-employee/<int:pk>/', views.delete_employee, name='delete_employee'),
 ]

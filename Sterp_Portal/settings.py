@@ -130,3 +130,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'admin_dashboard'
 LOGOUT_REDIRECT_URL = 'login'
+
+# Email Configuration
+# For development - use console backend to see emails in terminal
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# For production with Gmail (uncomment and configure when ready)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'sterpsoftwares@gmail.com'  # Your Gmail address
+EMAIL_HOST_PASSWORD = 'srudpaazzzfrfugn'  # Gmail App Password (not regular password)
+DEFAULT_FROM_EMAIL = 'sterpsoftwares@gmail.com'
+
+# Default from email for console backend
+#DEFAULT_FROM_EMAIL = 'STERP Softwares <admin@sterpsoftwares.com>'
