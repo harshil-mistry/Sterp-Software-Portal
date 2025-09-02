@@ -1,54 +1,60 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="min-h-[80vh] flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-        <div>
-            <!-- Replace with your actual logo -->
-            <img class="mx-auto h-22 w-auto" src="https://sterpclientportal.sterp.in/images/STERPLogo.png" alt="STERP Softwares">
-            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Welcome Back</h2>
-            <p class="mt-2 text-center text-sm text-gray-600">
-                Please sign in to your account
-            </p>
-        </div>
-        <form class="mt-8 space-y-6" method="post">
-            {% csrf_token %}
-            <div class="rounded-md shadow-sm -space-y-px">
-                <div>
-                    <label for="id_username" class="sr-only">Username</label>
-                    <input id="id_username" name="username" type="text" required 
-                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
-                        placeholder="Username">
-                </div>
-                <div>
-                    <label for="id_password" class="sr-only">Password</label>
-                    <input id="id_password" name="password" type="password" required 
-                        class="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm" 
-                        placeholder="Password">
-                </div>
+<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Login Card -->
+        <div class="bg-slate-800/50 backdrop-blur-lg p-8 rounded-3xl shadow-2xl border border-slate-700/50">
+            <div class="text-center">
+                <!-- Logo -->
+                <img class="mx-auto h-16 w-auto mb-8" src="https://sterpclientportal.sterp.in/images/STERPLogo.png" alt="STERP Softwares">
+                
+                <!-- Title -->
+                <h2 class="text-3xl font-bold text-white mb-2">Welcome Back</h2>
+                <p class="text-gray-400 mb-8">Enter your credentials to access the portal</p>
             </div>
+            
+            <form class="space-y-6" method="post">
+                {% csrf_token %}
+                
+                <!-- Username Field -->
+                <div>
+                    <label for="id_username" class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                    <input id="id_username" name="username" type="text" required 
+                        class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" 
+                        placeholder="Enter your username">
+                </div>
+                
+                <!-- Password Field -->
+                <div>
+                    <label for="id_password" class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <input id="id_password" name="password" type="password" required 
+                        class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300" 
+                        placeholder="Enter your password">
+                </div>
 
-            {% if form.errors %}
-            <div class="rounded-md bg-red-50 p-4 mt-4">
-                <div class="flex">
-                    <div class="text-sm text-red-700">
-                        Please enter a correct username and password.
+                {% if form.errors %}
+                <div class="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+                    <div class="flex items-center text-red-400">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Please enter correct username and password.
                     </div>
                 </div>
-            </div>
-            {% endif %}
+                {% endif %}
 
-            <div>
-                <button type="submit" class="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <!-- Submit Button -->
+                <button type="submit" class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transform transition-all duration-300 hover:scale-105">
                     <span class="absolute left-0 inset-y-0 flex items-center pl-3">
-                        <svg class="h-5 w-5 text-blue-500 group-hover:text-blue-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <svg class="h-5 w-5 text-blue-300 group-hover:text-blue-200" fill="none" viewBox="0 0 20 20" stroke="currentColor">
                             <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd" />
                         </svg>
                     </span>
-                    Sign in
+                    Enter Portal
                 </button>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

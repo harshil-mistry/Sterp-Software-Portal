@@ -41,7 +41,8 @@ class EmployeeCreationForm(UserCreationForm):
                 'password': password,
                 'company_name': 'STERP Softwares'
             })
-        except:
+        except Exception as template_error:
+            print(f"Template error: {template_error}")
             html_message = None
         
         plain_message = f"""
@@ -56,11 +57,16 @@ Employee ID: {employee.employee_id}
 
 Please log in and change your password after first login.
 
+Portal URL: http://your-domain.com/login/
+
 Best regards,
 STERP Softwares Team
         """
         
         try:
+            print(f"Attempting to send email to: {employee.email}")
+            print(f"From email: {settings.DEFAULT_FROM_EMAIL}")
+            
             send_mail(
                 subject=subject,
                 message=plain_message,
@@ -69,10 +75,30 @@ STERP Softwares Team
                 recipient_list=[employee.email],
                 fail_silently=False,
             )
+            print("Email sent successfully!")
             return True
+            
         except Exception as e:
-            print(f"Error sending email: {e}")
-            return False
+            print(f"Detailed email error: {str(e)}")
+            print(f"Error type: {type(e)}")
+            
+            # Try with basic authentication
+            try:
+                print("Retrying with simpler configuration...")
+                send_mail(
+                    subject=subject,
+                    message=plain_message,
+                    from_email=settings.EMAIL_HOST_USER,
+                    recipient_list=[employee.email],
+                    fail_silently=False,
+                    auth_user=settings.EMAIL_HOST_USER,
+                    auth_password=settings.EMAIL_HOST_PASSWORD,
+                )
+                print("Email sent on retry!")
+                return True
+            except Exception as retry_error:
+                print(f"Retry failed: {retry_error}")
+                return False
     
     def save(self, commit=True):
         employee = super().save(commit=False)
