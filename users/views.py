@@ -3,7 +3,10 @@ from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .forms import EmployeeCreationForm
 from .models import Employee
-from django.contrib.auth.views import LoginView
+from django.contrib.auth.views import LoginView, PasswordChangeView
+from django.urls import reverse_lazy
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 
 def is_admin(user):
     return user.is_superuser
@@ -34,9 +37,7 @@ def create_employee(request):
 def delete_employee(request, pk):
     if request.method == 'POST':
         employee = Employee.objects.get(pk=pk)
-        employee.delete()
-        messages.success(request, 'Employee deleted successfully!')
-        return redirect('admin_dashboard')
+        employee
 
 @login_required
 def employee_profile(request):
@@ -49,5 +50,14 @@ class CustomLoginView(LoginView):
         if self.request.user.is_superuser:
             return '/admin-dashboard/'
         return '/profile/'
+
+class CustomPasswordChangeView(PasswordChangeView):
+    template_name = 'users/change_password.html'
+    success_url = reverse_lazy('employee_profile')
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Your password has been changed successfully!')
+        return super().form_valid(form)
+
 def home(request):
     return render(request, 'users/home.html')
