@@ -19,7 +19,7 @@ class EmployeeCreationForm(UserCreationForm):
     
     class Meta:
         model = Employee
-        fields = ['employee_id', 'username', 'first_name', 'last_name', 'email', 
+        fields = ['first_name', 'last_name', 'email', 
                  'date_of_birth', 'phone_number', 'address', 'department']
         widgets = {
             'department': forms.Select(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'})
@@ -51,9 +51,8 @@ Welcome to STERP Softwares!
 Your account has been created successfully.
 
 Login Details:
-Username: {employee.username}
+Employee ID/Username: {employee.username}
 Password: {password}
-Employee ID: {employee.employee_id}
 
 Please log in and change your password after first login.
 
@@ -79,7 +78,6 @@ STERP Softwares Team
             return True
             
         except Exception as e:
-            print(f"Detailed email error: {str(e)}")
             print(f"Error type: {type(e)}")
             
             # Try with basic authentication
@@ -102,6 +100,11 @@ STERP Softwares Team
     
     def save(self, commit=True):
         employee = super().save(commit=False)
+        
+        # Generate Employee ID and set as username
+        if not employee.employee_id:
+            employee.employee_id = employee.generate_employee_id()
+        employee.username = employee.employee_id
         
         # Generate random password
         random_password = self.generate_random_password()

@@ -40,7 +40,7 @@
                     <tr class="hover:bg-slate-700/30 transition-colors duration-300">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                                {{ employee.employee_id }}
+                                {{ employee.username }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
@@ -50,7 +50,7 @@
                                 </div>
                                 <div>
                                     <div class="text-sm font-medium text-white">{{ employee.get_full_name }}</div>
-                                    <div class="text-sm text-gray-400">{{ employee.username }}</div>
+                                    <div class="text-sm text-gray-400">ID: {{ employee.username }}</div>
                                 </div>
                             </div>
                         </td>
