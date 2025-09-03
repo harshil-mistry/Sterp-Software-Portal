@@ -5,7 +5,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 import random
 import string
-from .models import Employee
+from .models import Employee, Project, ProjectCollaborator
 
 class EmployeeCreationForm(UserCreationForm):
     password1 = forms.CharField(widget=forms.HiddenInput(), required=False)
@@ -122,3 +122,40 @@ STERP Softwares Team
                 print("Email not sent")
         
         return employee
+
+class ProjectCreationForm(forms.ModelForm):
+    collaborators = forms.ModelMultipleChoiceField(
+        queryset=Employee.objects.filter(is_superuser=False),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        help_text="Select employees to collaborate on this project"
+    )
+    
+    class Meta:
+        model = Project
+        fields = ['name', 'description', 'status', 'priority', 'start_date', 'end_date']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+    
+    def save(self, commit=True, created_by=None):
+        project = super().save(commit=False)
+        if created_by:
+            project.created_by = created_by
+        
+        if commit:
+            project.save()
+            
+            # Add collaborators
+            collaborators = self.cleaned_data.get('collaborators')
+            if collaborators:
+                for employee in collaborators:
+                    ProjectCollaborator.objects.create(
+                        project=project,
+                        employee=employee,
+                        role='MEMBER'
+                    )
+        
+        return project

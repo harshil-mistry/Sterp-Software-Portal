@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from .forms import EmployeeCreationForm
-from .models import Employee
+from .forms import EmployeeCreationForm, ProjectCreationForm
+from .models import Employee, Project, ProjectCollaborator
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
@@ -61,3 +61,34 @@ class CustomPasswordChangeView(PasswordChangeView):
 
 def home(request):
     return render(request, 'users/home.html')
+
+@login_required
+@user_passes_test(is_admin)
+def project_list(request):
+    projects = Project.objects.all().prefetch_related('collaborators__employee')
+    return render(request, 'users/project_list.html', {'projects': projects})
+
+@login_required
+@user_passes_test(is_admin)
+def create_project(request):
+    if request.method == 'POST':
+        form = ProjectCreationForm(request.POST)
+        if form.is_valid():
+            project = form.save(created_by=request.user)
+            messages.success(request, f'Project "{project.name}" created successfully!')
+            return redirect('project_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ProjectCreationForm()
+    return render(request, 'users/create_project.html', {'form': form})
+
+@login_required
+@user_passes_test(is_admin)
+def project_detail(request, pk):
+    project = Project.objects.get(pk=pk)
+    collaborators = ProjectCollaborator.objects.filter(project=project).select_related('employee')
+    return render(request, 'users/project_detail.html', {
+        'project': project,
+        'collaborators': collaborators
+    })

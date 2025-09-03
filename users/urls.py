@@ -11,4 +11,7 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(next_page='login', template_name='users/logout.html'), name='logout'),
     path('delete-employee/<int:pk>/', views.delete_employee, name='delete_employee'),
     path('change-password/', views.CustomPasswordChangeView.as_view(), name='change_password'),
+    path('projects/', views.project_list, name='project_list'),
+    path('create-project/', views.create_project, name='create_project'),
+    path('project/<int:pk>/', views.project_detail, name='project_detail'),
 ]
