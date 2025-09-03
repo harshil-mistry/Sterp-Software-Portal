@@ -20,9 +20,11 @@ class EmployeeCreationForm(UserCreationForm):
     class Meta:
         model = Employee
         fields = ['first_name', 'last_name', 'email', 
-                 'date_of_birth', 'phone_number', 'address', 'department']
+                 'date_of_birth', 'phone_number', 'address', 'department', 'position', 'monthly_salary']
         widgets = {
-            'department': forms.Select(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'})
+            'department': forms.Select(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'}),
+            'position': forms.TextInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'}),
+            'monthly_salary': forms.NumberInput(attrs={'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2', 'step': '0.01'})
         }
     
     def generate_random_password(self):
