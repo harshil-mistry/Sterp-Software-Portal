@@ -7,6 +7,7 @@ from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
+from datetime import date
 
 def is_admin(user):
     return user.is_superuser
@@ -37,7 +38,10 @@ def create_employee(request):
 def delete_employee(request, pk):
     if request.method == 'POST':
         employee = Employee.objects.get(pk=pk)
-        employee
+        employee_name = employee.get_full_name()
+        employee.delete()
+        messages.success(request, f'Employee "{employee_name}" deleted successfully!')
+        return redirect('admin_dashboard')
 
 @login_required
 def employee_profile(request):
@@ -81,7 +85,11 @@ def create_project(request):
             messages.error(request, 'Please correct the errors below.')
     else:
         form = ProjectCreationForm()
-    return render(request, 'users/create_project.html', {'form': form})
+    
+    return render(request, 'users/create_project.html', {
+        'form': form,
+        'today': date.today().strftime('%Y-%m-%d')
+    })
 
 @login_required
 @user_passes_test(is_admin)
@@ -118,3 +126,51 @@ def delete_project(request, pk):
         project.delete()
         messages.success(request, f'Project "{project_name}" deleted successfully!')
         return redirect('project_list')
+
+@login_required
+def employee_projects(request):
+    """View for employees to see projects they're assigned to"""
+    if request.user.is_superuser:
+        return redirect('project_list')  # Admins should use the main project list
+    
+    collaborations = ProjectCollaborator.objects.filter(
+        employee=request.user
+    ).select_related('project').order_by('-project__created_at')
+    
+    projects = [collaboration.project for collaboration in collaborations]
+    
+    return render(request, 'users/employee_projects.html', {
+        'projects': projects,
+        'collaborations': collaborations
+    })
+
+@login_required
+def employee_project_detail(request, pk):
+    """View for employees to see project details they're assigned to"""
+    project = get_object_or_404(Project, pk=pk)
+    
+    # Check if employee is part of this project (or is admin)
+    if not request.user.is_superuser:
+        collaboration = ProjectCollaborator.objects.filter(
+            project=project, 
+            employee=request.user
+        ).first()
+        if not collaboration:
+            messages.error(request, "You don't have access to this project.")
+            return redirect('employee_projects')
+    
+    collaborators = ProjectCollaborator.objects.filter(project=project).select_related('employee')
+    user_role = None
+    
+    if not request.user.is_superuser:
+        user_collaboration = ProjectCollaborator.objects.filter(
+            project=project, 
+            employee=request.user
+        ).first()
+        user_role = user_collaboration.role if user_collaboration else None
+    
+    return render(request, 'users/employee_project_detail.html', {
+        'project': project,
+        'collaborators': collaborators,
+        'user_role': user_role
+    })

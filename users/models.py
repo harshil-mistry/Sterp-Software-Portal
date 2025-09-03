@@ -27,13 +27,22 @@ class Employee(AbstractUser):
         super().save(*args, **kwargs)
     
     def generate_employee_id(self):
-        """Generate a unique employee ID"""
+        """Generate a sequential employee ID in format STERPEMPxxx"""
+        # Get the last employee ID
+        last_employee = Employee.objects.filter(
+            employee_id__startswith='STERPEMP'
+        ).order_by('employee_id').last()
         
-        while True:
-            # Generate format: EMP + 4 digits
-            emp_id = 'EMP' + ''.join(random.choices(string.digits, k=4))
-            if not Employee.objects.filter(employee_id=emp_id).exists():
-                return emp_id
+        if last_employee and last_employee.employee_id:
+            # Extract the number part and increment it
+            last_number = int(last_employee.employee_id[8:])  # Remove 'STERPEMP' prefix
+            new_number = last_number + 1
+        else:
+            # First employee
+            new_number = 1
+        
+        # Format with leading zeros (001, 002, etc.)
+        return f'STERPEMP{new_number:03d}'
 
     
     def __str__(self):
