@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+import random
+import string
 
 class Employee(AbstractUser):
     DEPARTMENT_CHOICES = [
@@ -25,37 +27,71 @@ class Employee(AbstractUser):
         super().save(*args, **kwargs)
     
     def generate_employee_id(self):
-        """Generate the next employee ID in sequence"""
-        # Get the last employee ID
-        last_employee = Employee.objects.filter(
-            employee_id__startswith='STERPEMP'
-        ).order_by('employee_id').last()
+        """Generate a unique employee ID"""
         
-        if last_employee and last_employee.employee_id:
-            # Extract the numeric part and increment
-            try:
-                last_number = int(last_employee.employee_id.replace('STERPEMP', ''))
-                next_number = last_number + 1
-            except ValueError:
-                next_number = 1
-        else:
-            next_number = 1
-        
-        return f'STERPEMP{next_number:03d}'
+        while True:
+            # Generate format: EMP + 4 digits
+            emp_id = 'EMP' + ''.join(random.choices(string.digits, k=4))
+            if not Employee.objects.filter(employee_id=emp_id).exists():
+                return emp_id
+
     
     def __str__(self):
         return f"{self.employee_id} - {self.get_full_name()}"
-        if last_employee and last_employee.employee_id:
-            # Extract the numeric part and increment
-            try:
-                last_number = int(last_employee.employee_id.replace('STERPEMP', ''))
-                next_number = last_number + 1
-            except ValueError:
-                next_number = 1
-        else:
-            next_number = 1
-        
-        return f'STERPEMP{next_number:03d}'
+
+class Project(models.Model):
+    STATUS_CHOICES = [
+        ('PLANNING', 'Planning'),
+        ('IN_PROGRESS', 'In Progress'),
+        ('ON_HOLD', 'On Hold'),
+        ('COMPLETED', 'Completed'),
+        ('CANCELLED', 'Cancelled'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('LOW', 'Low'),
+        ('MEDIUM', 'Medium'),
+        ('HIGH', 'High'),
+        ('URGENT', 'Urgent'),
+    ]
+    
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PLANNING')
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='MEDIUM')
+    start_date = models.DateField()
+    end_date = models.DateField()
+    created_by = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='created_projects')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.employee_id} - {self.get_full_name()}"
+        return self.name
+    
+    class Meta:
+        ordering = ['-created_at']
+
+class ProjectCollaborator(models.Model):
+    ROLE_CHOICES = [
+        ('LEAD', 'Project Lead'),
+        ('MEMBER', 'Team Member'),
+        ('VIEWER', 'Viewer'),
+    ]
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='collaborators')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='project_collaborations')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='MEMBER')
+    added_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['project', 'employee']
+    
+    def __str__(self):
+        return f"{self.employee.get_full_name()} - {self.project.name}"
+    added_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        unique_together = ['project', 'employee']
+    
+    def __str__(self):
+        return f"{self.employee.get_full_name()} - {self.project.name}"

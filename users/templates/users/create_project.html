@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <!-- Header Section -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+        <div class="flex items-center">
+            <div class="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-3xl flex items-center justify-center mr-6">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">Create New Project</h1>
+                <p class="text-gray-400">Set up a new project and assign team members</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl border border-slate-700/50 overflow-hidden">
+        <form method="post" class="p-8 space-y-8">
+            {% csrf_token %}
+            
+            <!-- Project Details -->
+            <div class="space-y-6">
+                <h3 class="text-2xl font-bold text-white mb-4">Project Details</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Project Name <span class="text-red-400">*</span></label>
+                        <input type="text" name="name" required class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300" placeholder="Enter project name">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Status</label>
+                        <select name="status" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                            <option value="PLANNING">Planning</option>
+                            <option value="IN_PROGRESS">In Progress</option>
+                            <option value="ON_HOLD">On Hold</option>
+                            <option value="COMPLETED">Completed</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Priority</label>
+                        <select name="priority" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                            <option value="LOW">Low</option>
+                            <option value="MEDIUM" selected>Medium</option>
+                            <option value="HIGH">High</option>
+                            <option value="URGENT">Urgent</option>
+                        </select>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Start Date <span class="text-red-400">*</span></label>
+                        <input type="date" name="start_date" required class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">End Date <span class="text-red-400">*</span></label>
+                        <input type="date" name="end_date" required class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300">
+                    </div>
+                    
+                    <div class="md:col-span-2 space-y-2">
+                        <label class="block text-sm font-medium text-gray-300">Description</label>
+                        <textarea name="description" rows="4" class="w-full px-4 py-3 bg-slate-700/50 border border-slate-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-300" placeholder="Enter project description..."></textarea>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Team Members -->
+            <div class="space-y-6">
+                <h3 class="text-2xl font-bold text-white mb-4">Team Members</h3>
+                <div class="bg-slate-700/30 rounded-2xl p-6">
+                    <p class="text-gray-400 mb-4">Select employees to collaborate on this project:</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {% for employee in form.collaborators.field.queryset %}
+                        <label class="flex items-center p-3 bg-slate-600/30 rounded-xl hover:bg-slate-600/50 transition-all duration-300 cursor-pointer">
+                            <input type="checkbox" name="collaborators" value="{{ employee.pk }}" class="rounded border-gray-300 text-green-600 focus:ring-green-500 focus:ring-offset-0">
+                            <div class="ml-3">
+                                <div class="text-white font-medium">{{ employee.get_full_name }}</div>
+                                <div class="text-gray-400 text-sm">{{ employee.department }} - {{ employee.position }}</div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4 justify-end pt-6">
+                <a href="{% url 'project_list' %}" 
+                   class="inline-flex items-center justify-center px-6 py-3 border border-slate-600 rounded-xl text-gray-300 font-medium hover:bg-slate-700/50 transition-all duration-300">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Cancel
+                </a>
+                <button type="submit" 
+                        class="group relative inline-flex items-center justify-center px-8 py-3 bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl text-white font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+                    <span class="relative z-10 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Create Project
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-green-700 to-emerald-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
