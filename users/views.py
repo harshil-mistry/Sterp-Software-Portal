@@ -1,7 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from .forms import EmployeeCreationForm, ProjectCreationForm
+from .forms import EmployeeCreationForm, ProjectCreationForm, ProjectUpdateForm
 from .models import Employee, Project, ProjectCollaborator
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
@@ -92,3 +92,29 @@ def project_detail(request, pk):
         'project': project,
         'collaborators': collaborators
     })
+
+@login_required
+@user_passes_test(is_admin)
+def update_project(request, pk):
+    project = get_object_or_404(Project, pk=pk)
+    if request.method == 'POST':
+        form = ProjectUpdateForm(request.POST, instance=project)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Project "{project.name}" updated successfully!')
+            return redirect('project_detail', pk=project.pk)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = ProjectUpdateForm(instance=project)
+    return render(request, 'users/update_project.html', {'form': form, 'project': project})
+
+@login_required
+@user_passes_test(is_admin)
+def delete_project(request, pk):
+    if request.method == 'POST':
+        project = get_object_or_404(Project, pk=pk)
+        project_name = project.name
+        project.delete()
+        messages.success(request, f'Project "{project_name}" deleted successfully!')
+        return redirect('project_list')

@@ -159,3 +159,45 @@ class ProjectCreationForm(forms.ModelForm):
                     )
         
         return project
+
+class ProjectUpdateForm(forms.ModelForm):
+    collaborators = forms.ModelMultipleChoiceField(
+        queryset=Employee.objects.filter(is_superuser=False),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        help_text="Select employees to collaborate on this project"
+    )
+    
+    class Meta:
+        model = Project
+        fields = ['name', 'description', 'status', 'priority', 'start_date', 'end_date']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'description': forms.Textarea(attrs={'rows': 4}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk:
+            # Pre-select current collaborators
+            self.fields['collaborators'].initial = self.instance.collaborators.values_list('employee_id', flat=True)
+    
+    def save(self, commit=True):
+        project = super().save(commit)
+        
+        if commit:
+            # Clear existing collaborators
+            ProjectCollaborator.objects.filter(project=project).delete()
+            
+            # Add new collaborators
+            collaborators = self.cleaned_data.get('collaborators')
+            if collaborators:
+                for employee in collaborators:
+                    ProjectCollaborator.objects.create(
+                        project=project,
+                        employee=employee,
+                        role='MEMBER'
+                    )
+        
+        return project
