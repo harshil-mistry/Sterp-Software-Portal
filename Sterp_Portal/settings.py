@@ -150,3 +150,12 @@ DEFAULT_FROM_EMAIL = 'sterpsoftwares@gmail.com'
 
 # Default from email for console backend
 #DEFAULT_FROM_EMAIL = 'STERP Softwares <admin@sterpsoftwares.com>'
+
+# Google Calendar Integration Settings
+# Get these from Google Cloud Console > APIs & Services > Credentials
+GOOGLE_OAUTH2_CLIENT_ID = os.getenv('GOOGLE_OAUTH2_CLIENT_ID')
+GOOGLE_OAUTH2_CLIENT_SECRET = os.getenv('GOOGLE_OAUTH2_CLIENT_SECRET')
+
+# Uncomment the lines below and add your credentials for testing
+# GOOGLE_OAUTH2_CLIENT_ID = 'your-google-oauth2-client-id.apps.googleusercontent.com'
+# GOOGLE_OAUTH2_CLIENT_SECRET = 'your-google-oauth2-client-secret'

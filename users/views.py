@@ -2,13 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .forms import EmployeeCreationForm, ProjectCreationForm, ProjectUpdateForm
-from .models import Employee, Project, ProjectCollaborator
+from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCredentials
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from datetime import date
 
+from .google_calendar_utils import GoogleCalendarService
 def is_admin(user):
     return user.is_superuser
 
@@ -173,4 +174,105 @@ def employee_project_detail(request, pk):
         'project': project,
         'collaborators': collaborators,
         'user_role': user_role
+    })
+
+
+# Google Calendar Integration Views
+@login_required
+def google_calendar_connect(request):
+    """Initiate Google Calendar OAuth2 flow"""
+    
+    try:
+        authorization_url = GoogleCalendarService.get_authorization_url(request, request.user)
+        return redirect(authorization_url)
+    except Exception as e:
+        messages.error(request, f"Error connecting to Google Calendar: {str(e)}")
+        return redirect('employee_profile')
+
+
+@login_required
+def google_calendar_callback(request):
+    """Handle Google Calendar OAuth2 callback"""
+    
+    success, message = GoogleCalendarService.handle_callback(request)
+    if success:
+        messages.success(request, message)
+    else:
+        messages.error(request, message)
+    return redirect('employee_profile')
+
+
+@login_required
+def google_calendar_disconnect(request):
+    """Disconnect Google Calendar integration"""
+    if request.method == 'POST':
+        success, message = GoogleCalendarService.revoke_credentials(request.user)
+        if success:
+            messages.success(request, message)
+        else:
+            messages.error(request, message)
+    return redirect('employee_profile')
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_add_calendar_event(request, employee_id):
+    """Admin view to add events to employee's Google Calendar for testing"""
+    from datetime import datetime, timedelta
+    
+    employee = get_object_or_404(Employee, pk=employee_id)
+    
+    # Check if employee has Google Calendar connected
+    try:
+        credentials = GoogleCalendarCredentials.objects.get(employee=employee)
+    except GoogleCalendarCredentials.DoesNotExist:
+        messages.error(request, f'{employee.get_full_name()} has not connected their Google Calendar.')
+        return redirect('admin_dashboard')
+    
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description', '')
+        start_date = request.POST.get('start_date')
+        start_time = request.POST.get('start_time')
+        duration = int(request.POST.get('duration', 60))  # duration in minutes
+        
+        try:
+            # Create datetime objects
+            start_datetime = datetime.strptime(f"{start_date} {start_time}", "%Y-%m-%d %H:%M")
+            end_datetime = start_datetime + timedelta(minutes=duration)
+            
+            # Create event using Google Calendar Service
+            event_data = {
+                'summary': title,
+                'description': description,
+                'start': {
+                    'dateTime': start_datetime.isoformat(),
+                    'timeZone': 'Asia/Kolkata',
+                },
+                'end': {
+                    'dateTime': end_datetime.isoformat(),
+                    'timeZone': 'Asia/Kolkata',
+                },
+                'reminders': {
+                    'useDefault': False,
+                    'overrides': [
+                        {'method': 'email', 'minutes': 60},   # 1 hour before
+                        {'method': 'popup', 'minutes': 15},   # 15 minutes before
+                    ],
+                },
+            }
+            
+            success, result = GoogleCalendarService.create_event(employee, event_data)
+            
+            if success:
+                messages.success(request, f'Event "{title}" added to {employee.get_full_name()}\'s calendar successfully!')
+                return redirect('admin_dashboard')
+            else:
+                messages.error(request, f'Failed to add event: {result}')
+                
+        except Exception as e:
+            messages.error(request, f'Error creating event: {str(e)}')
+    
+    return render(request, 'users/admin_add_calendar_event.html', {
+        'employee': employee
     })

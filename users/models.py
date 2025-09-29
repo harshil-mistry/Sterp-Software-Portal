@@ -97,10 +97,27 @@ class ProjectCollaborator(models.Model):
     
     def __str__(self):
         return f"{self.employee.get_full_name()} - {self.project.name}"
-    added_at = models.DateTimeField(auto_now_add=True)
+
+
+class GoogleCalendarCredentials(models.Model):
+    """Store Google Calendar OAuth2 credentials for employees"""
+    employee = models.OneToOneField(
+        Employee, 
+        on_delete=models.CASCADE, 
+        related_name='google_calendar_credentials'
+    )
+    token = models.TextField(help_text="OAuth2 access token")
+    refresh_token = models.TextField(help_text="OAuth2 refresh token")
+    token_uri = models.TextField(help_text="Token URI for OAuth2")
+    client_id = models.TextField(help_text="Google OAuth2 client ID")
+    client_secret = models.TextField(help_text="Google OAuth2 client secret")
+    scopes = models.TextField(help_text="OAuth2 scopes (JSON array)")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        unique_together = ['project', 'employee']
+        verbose_name = "Google Calendar Credential"
+        verbose_name_plural = "Google Calendar Credentials"
     
     def __str__(self):
-        return f"{self.employee.get_full_name()} - {self.project.name}"
+        return f"Google Calendar - {self.employee.get_full_name()}"
