@@ -22,5 +22,5 @@ urlpatterns = [
     path('google-calendar/connect/', views.google_calendar_connect, name='google_calendar_connect'),
     path('google-calendar/callback/', views.google_calendar_callback, name='google_calendar_callback'),
     path('google-calendar/disconnect/', views.google_calendar_disconnect, name='google_calendar_disconnect'),
-    path('admin/add-calendar-event/<int:employee_id>/', views.admin_add_calendar_event, name='admin_add_calendar_event'),
+    path('add-calendar-event/<int:employee_id>/', views.admin_add_calendar_event, name='admin_add_calendar_event'),
 ]

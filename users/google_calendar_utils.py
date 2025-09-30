@@ -3,21 +3,15 @@ Google Calendar integration utilities
 """
 
 import json
+import logging
 from django.conf import settings
 
-try:
-    from google.auth.transport.requests import Request
-    from google.oauth2.credentials import Credentials
-    from google_auth_oauthlib.flow import Flow
-    from googleapiclient.discovery import build
-    GOOGLE_APIS_AVAILABLE = True
-except ImportError:
-    GOOGLE_APIS_AVAILABLE = False
-    # Define dummy classes to prevent import errors
-    class Request: pass
-    class Credentials: pass
-    class Flow: pass
-    def build(*args, **kwargs): pass
+logger = logging.getLogger(__name__)
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
 
 from .models import GoogleCalendarCredentials
 
@@ -29,9 +23,6 @@ class GoogleCalendarService:
     
     @classmethod
     def _check_availability(cls):
-        """Check if Google APIs are available"""
-        if not GOOGLE_APIS_AVAILABLE:
-            return False, "Google APIs not installed. Please install the required packages."
         
         if not hasattr(settings, 'GOOGLE_OAUTH2_CLIENT_ID') or not hasattr(settings, 'GOOGLE_OAUTH2_CLIENT_SECRET'):
             return False, "Google OAuth2 credentials not configured in settings."
@@ -185,22 +176,21 @@ class GoogleCalendarService:
         try:
             calendar_creds = GoogleCalendarCredentials.objects.get(employee=employee)
             
-            if GOOGLE_APIS_AVAILABLE:
-                # Try to revoke the token
-                credentials = Credentials(
-                    token=calendar_creds.token,
-                    refresh_token=calendar_creds.refresh_token,
-                    token_uri=calendar_creds.token_uri,
-                    client_id=calendar_creds.client_id,
-                    client_secret=calendar_creds.client_secret,
-                    scopes=json.loads(calendar_creds.scopes)
-                )
+            # Try to revoke the token
+            credentials = Credentials(
+                token=calendar_creds.token,
+                refresh_token=calendar_creds.refresh_token,
+                token_uri=calendar_creds.token_uri,
+                client_id=calendar_creds.client_id,
+                client_secret=calendar_creds.client_secret,
+                scopes=json.loads(calendar_creds.scopes)
+            )
                 
-                # Revoke credentials with Google
-                try:
-                    credentials.revoke(Request())
-                except Exception as revoke_error:
-                    print(f"Error revoking token with Google: {revoke_error}")
+            # Revoke credentials with Google
+            try:
+                credentials.revoke(Request())
+            except Exception as revoke_error:
+                print(f"Error revoking token with Google: {revoke_error}")
             
             # Delete from database
             calendar_creds.delete()
@@ -289,3 +279,51 @@ class GoogleCalendarService:
         }
         
         return cls.create_event(employee, event_data)
+    
+    @classmethod
+    def delete_project_events(cls, employee, project):
+        """Delete project-related events from employee's calendar"""
+        available, error = cls._check_availability()
+        if not available:
+            return False, error
+            
+        service = cls.get_calendar_service(employee)
+        if not service:
+            return False, "Google Calendar not connected"
+        
+        try:
+            # Search for events related to this project
+            events_result = service.events().list(
+                calendarId='primary',
+                q=f'Project: {project.name}',
+                maxResults=50
+            ).execute()
+            
+            events = events_result.get('items', [])
+            deleted_count = 0
+            
+            for event in events:
+                # Check if this is a project-related event by looking at the summary or description
+                summary = event.get('summary', '')
+                description = event.get('description', '')
+                
+                if (f'Project: {project.name}' in description or 
+                    f'Project Start: {project.name}' in summary or 
+                    f'Project Deadline: {project.name}' in summary):
+                    
+                    try:
+                        service.events().delete(
+                            calendarId='primary',
+                            eventId=event['id']
+                        ).execute()
+                        deleted_count += 1
+                    except Exception as e:
+                        logger.warning(f"Failed to delete event {event['id']}: {str(e)}")
+            
+            if deleted_count > 0:
+                return True, f"Deleted {deleted_count} project-related events"
+            else:
+                return True, "No project events found to delete"
+                
+        except Exception as e:
+            return False, f"Error deleting project events: {str(e)}"

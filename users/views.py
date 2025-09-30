@@ -6,10 +6,59 @@ from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCreden
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
-from django.contrib.auth.forms import PasswordChangeForm
+from django.views.decorators.csrf import csrf_exempt
 from datetime import date
+import time
+import logging
 
 from .google_calendar_utils import GoogleCalendarService
+
+logger = logging.getLogger(__name__)
+
+def add_project_calendar_events(project, collaborators_list=None):
+    """
+    Add calendar events for project start and deadline for all collaborators
+    who have Google Calendar connected
+    """
+    if collaborators_list is None:
+        # Get all collaborators for the project
+        collaborators = ProjectCollaborator.objects.filter(project=project).select_related('employee')
+        collaborators_list = [collab.employee for collab in collaborators]
+    
+    events_added = []
+    events_failed = []
+    
+    for employee in collaborators_list:
+        # Check if employee has Google Calendar connected
+        try:
+            calendar_creds = GoogleCalendarCredentials.objects.get(employee=employee)
+            
+            # Add project start event
+            start_success, start_message = GoogleCalendarService.create_project_start_event(employee, project)
+            if start_success:
+                events_added.append(f"{employee.get_full_name()} - Project Start")
+                logger.info(f"Added start event for {employee.get_full_name()} in project {project.name}")
+            else:
+                events_failed.append(f"{employee.get_full_name()} - Project Start: {start_message}")
+                logger.error(f"Failed to add start event for {employee.get_full_name()}: {start_message}")
+            
+            # Add project deadline event
+            deadline_success, deadline_message = GoogleCalendarService.create_project_deadline_event(employee, project)
+            if deadline_success:
+                events_added.append(f"{employee.get_full_name()} - Project Deadline")
+                logger.info(f"Added deadline event for {employee.get_full_name()} in project {project.name}")
+            else:
+                events_failed.append(f"{employee.get_full_name()} - Project Deadline: {deadline_message}")
+                logger.error(f"Failed to add deadline event for {employee.get_full_name()}: {deadline_message}")
+                
+        except GoogleCalendarCredentials.DoesNotExist:
+            logger.info(f"No Google Calendar connected for {employee.get_full_name()}")
+            continue
+        except Exception as e:
+            logger.error(f"Error adding calendar events for {employee.get_full_name()}: {str(e)}")
+            events_failed.append(f"{employee.get_full_name()} - Error: {str(e)}")
+    
+    return events_added, events_failed
 def is_admin(user):
     return user.is_superuser
 
@@ -80,7 +129,32 @@ def create_project(request):
         form = ProjectCreationForm(request.POST)
         if form.is_valid():
             project = form.save(created_by=request.user)
-            messages.success(request, f'Project "{project.name}" created successfully!')
+            
+            # Get the collaborators that were added
+            collaborators = form.cleaned_data.get('collaborators', [])
+            
+            # Add calendar events for collaborators
+            if collaborators:
+                events_added, events_failed = add_project_calendar_events(project, collaborators)
+                
+                # Show success message with calendar event info
+                success_msg = f'Project "{project.name}" created successfully!'
+                if events_added:
+                    success_msg += f' Calendar events added for: {", ".join([name.split(" - ")[0] for name in events_added])}'
+                if events_failed:
+                    success_msg += f' Some calendar events failed to add.'
+                
+                messages.success(request, success_msg)
+                
+                # Show warning for failed events if any
+                if events_failed:
+                    failed_msg = "Calendar event failures: " + "; ".join(events_failed[:3])  # Limit to first 3
+                    if len(events_failed) > 3:
+                        failed_msg += f" and {len(events_failed) - 3} more..."
+                    messages.warning(request, failed_msg)
+            else:
+                messages.success(request, f'Project "{project.name}" created successfully!')
+            
             return redirect('project_list')
         else:
             messages.error(request, 'Please correct the errors below.')
@@ -106,17 +180,140 @@ def project_detail(request, pk):
 @user_passes_test(is_admin)
 def update_project(request, pk):
     project = get_object_or_404(Project, pk=pk)
+    
     if request.method == 'POST':
+        # Store original project data before form save
+        original_start_date = project.start_date
+        original_end_date = project.end_date
+        current_collaborators = set(ProjectCollaborator.objects.filter(project=project).values_list('employee_id', flat=True))
+        
         form = ProjectUpdateForm(request.POST, instance=project)
         if form.is_valid():
+            # Get new collaborators from form
+            new_collaborators_set = set(form.cleaned_data.get('collaborators', []).values_list('id', flat=True))
+            
+            # Check if dates have changed
+            dates_changed = (
+                form.cleaned_data['start_date'] != original_start_date or 
+                form.cleaned_data['end_date'] != original_end_date
+            )
+            
+            # Save the form (this will update collaborators and project data)
             form.save()
-            messages.success(request, f'Project "{project.name}" updated successfully!')
+            
+            # Calculate changes in collaborators
+            added_collaborators_ids = new_collaborators_set - current_collaborators
+            removed_collaborators_ids = current_collaborators - new_collaborators_set
+            unchanged_collaborators_ids = current_collaborators & new_collaborators_set
+            
+            events_added = []
+            events_failed = []
+            events_removed = []
+            events_updated = []
+            
+            # Handle date changes for existing collaborators
+            if dates_changed and unchanged_collaborators_ids:
+                unchanged_employees = Employee.objects.filter(id__in=unchanged_collaborators_ids)
+                for employee in unchanged_employees:
+                    try:
+                        calendar_creds = GoogleCalendarCredentials.objects.get(employee=employee)
+                        
+                        # Delete old events with old dates
+                        delete_success, delete_message = GoogleCalendarService.delete_project_events(employee, project)
+                        
+                        # Create new events with updated dates
+                        new_events_added, new_events_failed = add_project_calendar_events(project, [employee])
+                        if new_events_added:
+                            events_updated.append(f"{employee.get_full_name()}")
+                            logger.info(f"Updated calendar events for {employee.get_full_name()} due to date changes")
+                        
+                        if new_events_failed:
+                            events_failed.extend(new_events_failed)
+                            
+                    except GoogleCalendarCredentials.DoesNotExist:
+                        logger.info(f"No Google Calendar connected for {employee.get_full_name()}")
+                        continue
+                    except Exception as e:
+                        logger.error(f"Error updating calendar events for {employee.get_full_name()}: {str(e)}")
+                        events_failed.append(f"{employee.get_full_name()} - Update error: {str(e)}")
+            
+            # Add calendar events for new collaborators
+            if added_collaborators_ids:
+                added_employees = Employee.objects.filter(id__in=added_collaborators_ids)
+                new_events_added, new_events_failed = add_project_calendar_events(project, added_employees)
+                events_added.extend(new_events_added)
+                events_failed.extend(new_events_failed)
+            
+            # Remove calendar events for removed collaborators
+            if removed_collaborators_ids:
+                removed_employees = Employee.objects.filter(id__in=removed_collaborators_ids)
+                for employee in removed_employees:
+                    try:
+                        calendar_creds = GoogleCalendarCredentials.objects.get(employee=employee)
+                        success, message = GoogleCalendarService.delete_project_events(employee, project)
+                        if success:
+                            events_removed.append(f"{employee.get_full_name()}")
+                            logger.info(f"Removed project events for {employee.get_full_name()} from project {project.name}")
+                        else:
+                            events_failed.append(f"{employee.get_full_name()} - Removal failed: {message}")
+                            logger.error(f"Failed to remove events for {employee.get_full_name()}: {message}")
+                    except GoogleCalendarCredentials.DoesNotExist:
+                        logger.info(f"No Google Calendar connected for {employee.get_full_name()}")
+                        continue
+                    except Exception as e:
+                        logger.error(f"Error removing calendar events for {employee.get_full_name()}: {str(e)}")
+                        events_failed.append(f"{employee.get_full_name()} - Error: {str(e)}")
+            
+            # Build success message
+            success_msg = f'Project "{project.name}" updated successfully!'
+            if events_added:
+                success_msg += f' Calendar events added for: {", ".join([name.split(" - ")[0] for name in events_added])}'
+            if events_removed:
+                success_msg += f' Calendar events removed for: {", ".join(events_removed)}'
+            if events_updated:
+                success_msg += f' Calendar events updated for: {", ".join(events_updated)}'
+            
+            messages.success(request, success_msg)
+            
+            # Show warning for failed events if any
+            if events_failed:
+                failed_msg = "Calendar event issues: " + "; ".join(events_failed[:3])  # Limit to first 3
+                if len(events_failed) > 3:
+                    failed_msg += f" and {len(events_failed) - 3} more..."
+                messages.warning(request, failed_msg)
+            
             return redirect('project_detail', pk=project.pk)
         else:
             messages.error(request, 'Please correct the errors below.')
     else:
         form = ProjectUpdateForm(instance=project)
+    
     return render(request, 'users/update_project.html', {'form': form, 'project': project})
+
+def sync_all_existing_projects_for_employee(employee):
+    """
+    Utility function to sync all existing projects for a newly connected employee
+    This is used when someone connects their Google Calendar for the first time
+    """
+    try:
+        # Get all projects where this employee is a collaborator
+        collaborations = ProjectCollaborator.objects.filter(employee=employee).select_related('project')
+        projects = [collab.project for collab in collaborations]
+        
+        total_events_added = 0
+        synced_projects = []
+        
+        for project in projects:
+            events_added, events_failed = add_project_calendar_events(project, [employee])
+            if events_added:
+                total_events_added += len(events_added)
+                synced_projects.append(project.name)
+        
+        return total_events_added, synced_projects
+        
+    except Exception as e:
+        logger.error(f"Error syncing all projects for {employee.get_full_name()}: {str(e)}")
+        return 0, []
 
 @login_required
 @user_passes_test(is_admin)
@@ -124,8 +321,38 @@ def delete_project(request, pk):
     if request.method == 'POST':
         project = get_object_or_404(Project, pk=pk)
         project_name = project.name
-        project.delete()
-        messages.success(request, f'Project "{project_name}" deleted successfully!')
+        
+        # Automatically remove calendar events for all collaborators before deleting
+        try:
+            collaborators = ProjectCollaborator.objects.filter(project=project).select_related('employee')
+            events_removed_count = 0
+            
+            for collab in collaborators:
+                try:
+                    calendar_creds = GoogleCalendarCredentials.objects.get(employee=collab.employee)
+                    success, message = GoogleCalendarService.delete_project_events(collab.employee, project)
+                    if success:
+                        events_removed_count += 1
+                        logger.info(f"Removed calendar events for {collab.employee.get_full_name()} from deleted project {project_name}")
+                except GoogleCalendarCredentials.DoesNotExist:
+                    logger.info(f"No calendar credentials for {collab.employee.get_full_name()}")
+                    continue
+                except Exception as e:
+                    logger.error(f"Error removing calendar events for {collab.employee.get_full_name()}: {str(e)}")
+            
+            project.delete()
+            
+            if events_removed_count > 0:
+                messages.success(request, f'Project "{project_name}" deleted successfully! Calendar events removed for {events_removed_count} team member{"s" if events_removed_count != 1 else ""}.')
+            else:
+                messages.success(request, f'Project "{project_name}" deleted successfully!')
+                
+        except Exception as e:
+            logger.error(f"Error during project deletion: {str(e)}")
+            project.delete()  # Still delete the project even if calendar cleanup fails
+            messages.success(request, f'Project "{project_name}" deleted successfully!')
+            messages.warning(request, "Some calendar events might not have been removed.")
+        
         return redirect('project_list')
 
 @login_required
@@ -190,14 +417,93 @@ def google_calendar_connect(request):
         return redirect('employee_profile')
 
 
-@login_required
+@csrf_exempt
 def google_calendar_callback(request):
-    """Handle Google Calendar OAuth2 callback"""
+    """Handle Google Calendar OAuth2 callback with session validation"""
     
+    logger.info(f"OAuth callback received. Session key: {request.session.session_key}")
+    logger.info(f"User authenticated: {request.user.is_authenticated}")
+    logger.info(f"Request method: {request.method}")
+    logger.info(f"Request URL: {request.build_absolute_uri()}")
+    
+    # Ensure session is fully loaded - wait and retry if needed
+    max_retries = 3
+    retry_count = 0
+    session_loaded = False
+    
+    while retry_count < max_retries and not session_loaded:
+        try:
+            # Force session load by accessing session data
+            session_key = request.session.session_key
+            logger.info(f"Attempt {retry_count + 1}: Session key: {session_key}")
+            
+            if session_key:
+                # Try to access session data that should exist
+                auth_state = request.session.get('google_auth_state')
+                employee_id = request.session.get('google_auth_employee_id')
+                
+                logger.info(f"Session data - Auth state exists: {bool(auth_state)}, Employee ID: {employee_id}")
+                
+                if auth_state and employee_id:
+                    session_loaded = True
+                    logger.info("Session successfully loaded with OAuth data")
+                else:
+                    # Session exists but OAuth data missing - might be invalid
+                    if retry_count == max_retries - 1:
+                        logger.error("OAuth session data missing after all retries")
+                        messages.error(request, "OAuth session expired. Please try connecting again.")
+                        return redirect('employee_profile')
+            
+            if not session_loaded:
+                logger.info(f"Session not ready, waiting... (attempt {retry_count + 1})")
+                time.sleep(0.5)  # Wait 500ms before retry
+                retry_count += 1
+                
+        except Exception as e:
+            logger.error(f"Session loading error: {str(e)}")
+            retry_count += 1
+            if retry_count >= max_retries:
+                messages.error(request, "Session loading failed. Please try connecting again.")
+                return redirect('employee_profile')
+            time.sleep(0.5)
+    
+    # # Check if user is logged in after session is loaded
+    if not request.user.is_authenticated:
+        logger.warning("User not authenticated after session loading")
+        messages.error(request, "You must be logged in to connect Google Calendar.")
+        return redirect('login')
+    
+    # Process the OAuth callback
+    logger.info("Processing OAuth callback with GoogleCalendarService")
     success, message = GoogleCalendarService.handle_callback(request)
     if success:
-        messages.success(request, message)
+        logger.info(f"OAuth callback successful: {message}")
+        
+        # Automatically sync calendar events for existing projects
+        try:
+            total_events_added, synced_projects = sync_all_existing_projects_for_employee(request.user)
+            
+            if total_events_added > 0:
+                if len(synced_projects) == 1:
+                    sync_msg = f"Calendar events automatically created for existing project: \"{synced_projects[0]}\""
+                elif len(synced_projects) <= 3:
+                    project_list = ', '.join([f'"{name}"' for name in synced_projects])
+                    sync_msg = f"Calendar events automatically created for existing projects: {project_list}"
+                else:
+                    sync_msg = f"Calendar events automatically created for {len(synced_projects)} existing projects"
+                
+                success_message = f"{message} {sync_msg} ({total_events_added} events added)"
+            else:
+                success_message = f"{message} No existing project assignments found."
+                
+            messages.success(request, success_message)
+            
+        except Exception as e:
+            logger.error(f"Error auto-syncing existing projects: {str(e)}")
+            messages.success(request, message)  # Show original success message
+            messages.info(request, "Connected successfully, but couldn't auto-sync existing projects.")
     else:
+        logger.error(f"OAuth callback failed: {message}")
         messages.error(request, message)
     return redirect('employee_profile')
 
