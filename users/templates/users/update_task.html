@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit Task: {{ task.name }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Edit Task</h1>
+                    <p class="mt-1 text-sm text-gray-600">Update task details and assignment</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'task_detail' task.pk %}" 
+                       class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                        Back to Task
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Current Task Info -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-400"></i>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-blue-800">Current Task Information</h3>
+                    <div class="mt-2 text-sm text-blue-700">
+                        <p><strong>Assigned to:</strong> {{ task.employee.get_full_name }}</p>
+                        <p><strong>Status:</strong> {{ task.get_status_display }}</p>
+                        <p><strong>Due:</strong> {{ task.date|date:"M d, Y" }}</p>
+                        {% if task.status == 'COMPLETED' %}
+                            <p><strong>Completed:</strong> {{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Update Form -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Task Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Task Name <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Description <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Employee and Date Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Assign to Employee -->
+                    <div>
+                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Assign to Employee <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.employee }}
+                        {% if form.employee.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
+                        {% endif %}
+                        {% if task.status == 'COMPLETED' %}
+                            <p class="mt-1 text-sm text-amber-600">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                                Note: Changing the employee for a completed task will affect completion records.
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Due Date -->
+                    <div>
+                        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Due Date <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Priority, Hours, and Status Row -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Priority -->
+                    <div>
+                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Priority
+                        </label>
+                        {{ form.priority }}
+                        {% if form.priority.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Estimated Hours -->
+                    <div>
+                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Estimated Hours
+                        </label>
+                        {{ form.estimated_hours }}
+                        {% if form.estimated_hours.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.estimated_hours.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Status -->
+                    <div>
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Status
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">
+                            Change status to mark task as completed or reopen a completed task
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Status Change Warning -->
+                {% if task.status == 'COMPLETED' %}
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-amber-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-amber-800">Task Status Change</h3>
+                            <div class="mt-2 text-sm text-amber-700">
+                                <p>This task is currently marked as completed. If you change the status back to pending:</p>
+                                <ul class="mt-1 list-disc list-inside">
+                                    <li>The completion timestamp will be cleared</li>
+                                    <li>Completion notes and actual hours will be preserved</li>
+                                    <li>The employee can complete the task again</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Completion Information (if completed) -->
+                {% if task.status == 'COMPLETED' %}
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-green-800 mb-2">Completion Information</h3>
+                    <div class="text-sm text-green-700 space-y-1">
+                        <p><strong>Completed:</strong> {{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
+                        {% if task.actual_hours %}
+                            <p><strong>Time Spent:</strong> {{ task.actual_hours }} hour{{ task.actual_hours|pluralize }}</p>
+                        {% endif %}
+                        {% if task.completion_notes %}
+                            <p><strong>Notes:</strong></p>
+                            <p class="whitespace-pre-line bg-white p-2 rounded border">{{ task.completion_notes }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <a href="{% url 'task_detail' task.pk %}" 
+                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <i class="fas fa-save mr-2"></i>Update Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle status change warnings
+    const statusField = document.getElementById('{{ form.status.id_for_label }}');
+    const originalStatus = '{{ task.status }}';
+    
+    if (statusField) {
+        statusField.addEventListener('change', function() {
+            if (originalStatus === 'COMPLETED' && this.value === 'PENDING') {
+                if (!confirm('Are you sure you want to reopen this completed task? This will clear the completion timestamp but preserve completion notes.')) {
+                    this.value = originalStatus;
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

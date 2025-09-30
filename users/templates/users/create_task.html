@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Create Task{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white shadow rounded-lg p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Create New Task</h1>
+                    <p class="mt-1 text-sm text-gray-600">Assign a new task to an employee</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'task_list' %}" 
+                       class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                        Back to Tasks
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Creation Form -->
+        <div class="bg-white shadow rounded-lg p-6">
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Task Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Task Name <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                <div>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Description <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Employee and Date Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Assign to Employee -->
+                    <div>
+                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Assign to Employee <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.employee }}
+                        {% if form.employee.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Due Date -->
+                    <div>
+                        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Due Date <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.date.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Priority and Estimated Hours Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Priority -->
+                    <div>
+                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Priority
+                        </label>
+                        {{ form.priority }}
+                        {% if form.priority.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Estimated Hours -->
+                    <div>
+                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                            Estimated Hours
+                        </label>
+                        {{ form.estimated_hours }}
+                        {% if form.estimated_hours.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.estimated_hours.errors.0 }}</p>
+                        {% endif %}
+                        <p class="mt-1 text-sm text-gray-500">Optional: Enter estimated hours to complete this task</p>
+                    </div>
+                </div>
+
+                <!-- Quick Task Templates -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Quick Task Templates</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <button type="button" class="task-template text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                                data-name="Daily Report Submission"
+                                data-description="Submit daily work report including completed tasks, challenges faced, and plans for tomorrow."
+                                data-hours="0.5">
+                            <div class="font-medium text-gray-900">Daily Report</div>
+                            <div class="text-sm text-gray-500">Submit daily work report</div>
+                        </button>
+                        <button type="button" class="task-template text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                                data-name="Code Review"
+                                data-description="Review assigned code changes, check for best practices, and provide feedback to team members."
+                                data-hours="2.0">
+                            <div class="font-medium text-gray-900">Code Review</div>
+                            <div class="text-sm text-gray-500">Review and provide feedback</div>
+                        </button>
+                        <button type="button" class="task-template text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                                data-name="Client Meeting Preparation"
+                                data-description="Prepare presentation materials, review project status, and gather necessary documents for client meeting."
+                                data-hours="1.5">
+                            <div class="font-medium text-gray-900">Meeting Prep</div>
+                            <div class="text-sm text-gray-500">Prepare for client meeting</div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <a href="{% url 'task_list' %}" 
+                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        <i class="fas fa-plus mr-2"></i>Create Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Handle task template clicks
+    const templates = document.querySelectorAll('.task-template');
+    const nameField = document.getElementById('{{ form.name.id_for_label }}');
+    const descriptionField = document.getElementById('{{ form.description.id_for_label }}');
+    const hoursField = document.getElementById('{{ form.estimated_hours.id_for_label }}');
+    
+    templates.forEach(template => {
+        template.addEventListener('click', function() {
+            nameField.value = this.dataset.name;
+            descriptionField.value = this.dataset.description;
+            hoursField.value = this.dataset.hours;
+            
+            // Visual feedback
+            templates.forEach(t => t.classList.remove('border-blue-500', 'bg-blue-50'));
+            this.classList.add('border-blue-500', 'bg-blue-50');
+        });
+    });
+});
+</script>
+{% endblock %}

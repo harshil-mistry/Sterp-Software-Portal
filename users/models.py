@@ -121,3 +121,117 @@ class GoogleCalendarCredentials(models.Model):
     
     def __str__(self):
         return f"Google Calendar - {self.employee.get_full_name()}"
+
+
+class Task(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('COMPLETED', 'Completed'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('LOW', 'Low'),
+        ('MEDIUM', 'Medium'),
+        ('HIGH', 'High'),
+        ('URGENT', 'Urgent'),
+    ]
+    
+    name = models.CharField(max_length=200, help_text="Task title/name")
+    description = models.TextField(help_text="Detailed description of the task")
+    employee = models.ForeignKey(
+        Employee, 
+        on_delete=models.CASCADE, 
+        related_name='assigned_tasks',
+        help_text="Employee assigned to this task"
+    )
+    date = models.DateField(help_text="Date when the task should be completed")
+    priority = models.CharField(
+        max_length=10, 
+        choices=PRIORITY_CHOICES, 
+        default='MEDIUM',
+        help_text="Task priority level"
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=STATUS_CHOICES, 
+        default='PENDING',
+        help_text="Current status of the task"
+    )
+    created_by = models.ForeignKey(
+        Employee, 
+        on_delete=models.CASCADE, 
+        related_name='created_tasks',
+        help_text="Admin who created this task"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, help_text="When the task was created")
+    completed_at = models.DateTimeField(
+        null=True, 
+        blank=True, 
+        help_text="When the task was marked as completed"
+    )
+    updated_at = models.DateTimeField(auto_now=True, help_text="Last time the task was updated")
+    
+    # Additional tracking fields
+    completion_notes = models.TextField(
+        blank=True, 
+        help_text="Notes added by employee when completing the task"
+    )
+    estimated_hours = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text="Estimated hours to complete this task"
+    )
+    actual_hours = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True,
+        help_text="Actual hours spent on this task"
+    )
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Task"
+        verbose_name_plural = "Tasks"
+        indexes = [
+            models.Index(fields=['employee', 'date']),
+            models.Index(fields=['status', 'date']),
+            models.Index(fields=['created_by', 'created_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.name} - {self.employee.get_full_name()} ({self.get_status_display()})"
+    
+    def is_overdue(self):
+        """Check if the task is overdue"""
+        from django.utils import timezone
+        if self.status == 'PENDING' and self.date < timezone.now().date():
+            return True
+        return False
+    
+    def days_until_due(self):
+        """Calculate days until the task is due"""
+        from django.utils import timezone
+        if self.status == 'COMPLETED':
+            return None
+        delta = self.date - timezone.now().date()
+        return delta.days
+    
+    def time_to_complete(self):
+        """Calculate time taken to complete the task"""
+        if self.status == 'COMPLETED' and self.completed_at:
+            return self.completed_at - self.created_at
+        return None
+    
+    def mark_completed(self, completion_notes='', actual_hours=None):
+        """Mark the task as completed"""
+        from django.utils import timezone
+        self.status = 'COMPLETED'
+        self.completed_at = timezone.now()
+        if completion_notes:
+            self.completion_notes = completion_notes
+        if actual_hours:
+            self.actual_hours = actual_hours
+        self.save()

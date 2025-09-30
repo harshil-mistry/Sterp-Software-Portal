@@ -23,4 +23,13 @@ urlpatterns = [
     path('google-calendar/callback/', views.google_calendar_callback, name='google_calendar_callback'),
     path('google-calendar/disconnect/', views.google_calendar_disconnect, name='google_calendar_disconnect'),
     path('add-calendar-event/<int:employee_id>/', views.admin_add_calendar_event, name='admin_add_calendar_event'),
+    # Task Management URLs
+    path('tasks/', views.task_list, name='task_list'),
+    path('tasks/create/', views.create_task, name='create_task'),
+    path('tasks/<int:pk>/', views.task_detail, name='task_detail'),
+    path('tasks/<int:pk>/edit/', views.update_task, name='update_task'),
+    path('tasks/<int:pk>/delete/', views.delete_task, name='delete_task'),
+    path('my-tasks/', views.employee_tasks, name='employee_tasks'),
+    path('my-tasks/<int:pk>/', views.employee_task_detail, name='employee_task_detail'),
+    path('my-tasks/<int:pk>/complete/', views.mark_task_completed, name='mark_task_completed'),
 ]

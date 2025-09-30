@@ -1,8 +1,8 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from .forms import EmployeeCreationForm, ProjectCreationForm, ProjectUpdateForm
-from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCredentials
+from .forms import EmployeeCreationForm, ProjectCreationForm, ProjectUpdateForm, TaskCreationForm, TaskUpdateForm, TaskCompletionForm
+from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCredentials, Task
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
@@ -582,3 +582,196 @@ def admin_add_calendar_event(request, employee_id):
     return render(request, 'users/admin_add_calendar_event.html', {
         'employee': employee
     })
+
+
+# ============================================
+# TASK MANAGEMENT VIEWS
+# ============================================
+
+@login_required
+@user_passes_test(is_admin)
+def task_list(request):
+    """Admin view to list all tasks with filtering options"""
+    tasks = Task.objects.all().select_related('employee', 'created_by')
+    
+    # Filter by employee
+    employee_id = request.GET.get('employee')
+    if employee_id:
+        tasks = tasks.filter(employee_id=employee_id)
+    
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        tasks = tasks.filter(status=status)
+    
+    # Filter by date range
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
+    if date_from:
+        tasks = tasks.filter(date__gte=date_from)
+    if date_to:
+        tasks = tasks.filter(date__lte=date_to)
+    
+    # Get employees for filter dropdown
+    employees = Employee.objects.filter(is_superuser=False).order_by('first_name', 'last_name')
+    
+    # Get task statistics
+    total_tasks = tasks.count()
+    pending_tasks = tasks.filter(status='PENDING').count()
+    completed_tasks = tasks.filter(status='COMPLETED').count()
+    overdue_tasks = tasks.filter(status='PENDING', date__lt=date.today()).count()
+    
+    context = {
+        'tasks': tasks,
+        'employees': employees,
+        'total_tasks': total_tasks,
+        'pending_tasks': pending_tasks,
+        'completed_tasks': completed_tasks,
+        'overdue_tasks': overdue_tasks,
+        'selected_employee': employee_id,
+        'selected_status': status,
+        'selected_date_from': date_from,
+        'selected_date_to': date_to,
+    }
+    
+    return render(request, 'users/task_list.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def create_task(request):
+    """Admin view to create a new task"""
+    if request.method == 'POST':
+        form = TaskCreationForm(request.POST)
+        if form.is_valid():
+            task = form.save(created_by=request.user)
+            messages.success(request, f'Task "{task.name}" assigned to {task.employee.get_full_name()} successfully!')
+            return redirect('task_list')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = TaskCreationForm()
+        # Set default date to today
+        form.fields['date'].widget.attrs['value'] = date.today().strftime('%Y-%m-%d')
+    
+    return render(request, 'users/create_task.html', {
+        'form': form,
+        'today': date.today().strftime('%Y-%m-%d')
+    })
+
+
+@login_required
+@user_passes_test(is_admin)
+def task_detail(request, pk):
+    """Admin view to see task details"""
+    task = get_object_or_404(Task, pk=pk)
+    
+    context = {
+        'task': task,
+    }
+    
+    return render(request, 'users/task_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def update_task(request, pk):
+    """Admin view to update a task"""
+    task = get_object_or_404(Task, pk=pk)
+    
+    if request.method == 'POST':
+        form = TaskUpdateForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Task "{task.name}" updated successfully!')
+            return redirect('task_detail', pk=task.pk)
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = TaskUpdateForm(instance=task)
+    
+    return render(request, 'users/update_task.html', {
+        'form': form,
+        'task': task
+    })
+
+
+@login_required
+@user_passes_test(is_admin)
+def delete_task(request, pk):
+    """Admin view to delete a task"""
+    if request.method == 'POST':
+        task = get_object_or_404(Task, pk=pk)
+        task_name = task.name
+        employee_name = task.employee.get_full_name()
+        task.delete()
+        messages.success(request, f'Task "{task_name}" for {employee_name} deleted successfully!')
+        return redirect('task_list')
+
+
+@login_required
+def employee_tasks(request):
+    """Employee view to see their assigned tasks"""
+    if request.user.is_superuser:
+        return redirect('task_list')  # Admins should use the main task list
+    
+    # Get tasks assigned to the current employee
+    tasks = Task.objects.filter(employee=request.user).order_by('-created_at')
+    
+    # Filter by status if requested
+    status = request.GET.get('status')
+    if status:
+        tasks = tasks.filter(status=status)
+    
+    # Get task statistics for the employee
+    total_tasks = Task.objects.filter(employee=request.user).count()
+    pending_tasks = Task.objects.filter(employee=request.user, status='PENDING').count()
+    completed_tasks = Task.objects.filter(employee=request.user, status='COMPLETED').count()
+    overdue_tasks = Task.objects.filter(employee=request.user, status='PENDING', date__lt=date.today()).count()
+    
+    context = {
+        'tasks': tasks,
+        'total_tasks': total_tasks,
+        'pending_tasks': pending_tasks,
+        'completed_tasks': completed_tasks,
+        'overdue_tasks': overdue_tasks,
+        'selected_status': status,
+    }
+    
+    return render(request, 'users/employee_tasks.html', context)
+
+
+@login_required
+def employee_task_detail(request, pk):
+    """Employee view to see task details and mark as completed"""
+    task = get_object_or_404(Task, pk=pk, employee=request.user)
+    
+    if request.method == 'POST' and task.status == 'PENDING':
+        form = TaskCompletionForm(request.POST, instance=task)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Task "{task.name}" marked as completed!')
+            return redirect('employee_tasks')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = TaskCompletionForm(instance=task) if task.status == 'PENDING' else None
+    
+    context = {
+        'task': task,
+        'form': form,
+    }
+    
+    return render(request, 'users/employee_task_detail.html', context)
+
+
+@login_required
+def mark_task_completed(request, pk):
+    """Quick action to mark a task as completed without form"""
+    task = get_object_or_404(Task, pk=pk, employee=request.user)
+    
+    if request.method == 'POST' and task.status == 'PENDING':
+        task.mark_completed()
+        messages.success(request, f'Task "{task.name}" marked as completed!')
+    
+    return redirect('employee_tasks')

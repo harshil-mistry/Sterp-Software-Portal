@@ -5,7 +5,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 import random
 import string
-from .models import Employee, Project, ProjectCollaborator
+from .models import Employee, Project, ProjectCollaborator, Task
 
 class EmployeeCreationForm(UserCreationForm):
     password1 = forms.CharField(widget=forms.HiddenInput(), required=False)
@@ -201,3 +201,126 @@ class ProjectUpdateForm(forms.ModelForm):
                     )
         
         return project
+
+
+class TaskCreationForm(forms.ModelForm):
+    """Form for creating new tasks"""
+    
+    class Meta:
+        model = Task
+        fields = ['name', 'description', 'employee', 'date', 'priority', 'estimated_hours']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'placeholder': 'Enter task title'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'rows': 4,
+                'placeholder': 'Describe the task in detail...'
+            }),
+            'employee': forms.Select(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            }),
+            'date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            }),
+            'priority': forms.Select(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            }),
+            'estimated_hours': forms.NumberInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'step': '0.5',
+                'min': '0',
+                'placeholder': 'e.g., 2.5'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show non-admin employees in the dropdown
+        self.fields['employee'].queryset = Employee.objects.filter(is_superuser=False)
+        self.fields['employee'].empty_label = "Select an employee"
+    
+    def save(self, commit=True, created_by=None):
+        task = super().save(commit=False)
+        if created_by:
+            task.created_by = created_by
+        
+        if commit:
+            task.save()
+        
+        return task
+
+
+class TaskUpdateForm(forms.ModelForm):
+    """Form for updating existing tasks"""
+    
+    class Meta:
+        model = Task
+        fields = ['name', 'description', 'employee', 'date', 'priority', 'estimated_hours', 'status']
+        widgets = {
+            'name': forms.TextInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'rows': 4
+            }),
+            'employee': forms.Select(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            }),
+            'date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            }),
+            'priority': forms.Select(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            }),
+            'estimated_hours': forms.NumberInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'step': '0.5',
+                'min': '0'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['employee'].queryset = Employee.objects.filter(is_superuser=False)
+
+
+class TaskCompletionForm(forms.ModelForm):
+    """Form for employees to mark tasks as completed"""
+    
+    class Meta:
+        model = Task
+        fields = ['completion_notes', 'actual_hours']
+        widgets = {
+            'completion_notes': forms.Textarea(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'rows': 3,
+                'placeholder': 'Add any notes about the completed task (optional)...'
+            }),
+            'actual_hours': forms.NumberInput(attrs={
+                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'step': '0.5',
+                'min': '0',
+                'placeholder': 'e.g., 3.0'
+            })
+        }
+    
+    def save(self, commit=True):
+        task = super().save(commit=False)
+        task.mark_completed(
+            completion_notes=self.cleaned_data.get('completion_notes', ''),
+            actual_hours=self.cleaned_data.get('actual_hours')
+        )
+        
+        if commit:
+            task.save()
+        
+        return task
