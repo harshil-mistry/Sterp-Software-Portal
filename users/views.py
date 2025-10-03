@@ -188,8 +188,20 @@ def home(request):
 @login_required
 @user_passes_test(is_admin)
 def project_list(request):
-    projects = Project.objects.all().prefetch_related('collaborators__employee')
-    return render(request, 'users/project_list.html', {'projects': projects})
+    projects = Project.objects.all().prefetch_related('collaborators__employee', 'project_tasks')
+    
+    # Calculate completion percentage for each project
+    projects_with_completion = []
+    for project in projects:
+        projects_with_completion.append({
+            'project': project,
+            'completion_percentage': project.get_completion_percentage()
+        })
+    
+    return render(request, 'users/project_list.html', {
+        'projects': projects,
+        'projects_with_completion': projects_with_completion
+    })
 
 @login_required
 @user_passes_test(is_admin)
@@ -465,13 +477,22 @@ def employee_projects(request):
     
     collaborations = ProjectCollaborator.objects.filter(
         employee=request.user
-    ).select_related('project').order_by('-project__created_at')
+    ).select_related('project').prefetch_related('project__project_tasks').order_by('-project__created_at')
     
     projects = [collaboration.project for collaboration in collaborations]
     
+    # Calculate completion percentage for each project
+    projects_with_completion = []
+    for project in projects:
+        projects_with_completion.append({
+            'project': project,
+            'completion_percentage': project.get_completion_percentage()
+        })
+    
     return render(request, 'users/employee_projects.html', {
         'projects': projects,
-        'collaborations': collaborations
+        'collaborations': collaborations,
+        'projects_with_completion': projects_with_completion
     })
 
 @login_required
@@ -499,10 +520,14 @@ def employee_project_detail(request, pk):
         ).first()
         user_role = user_collaboration.role if user_collaboration else None
     
+    # Calculate project completion percentage
+    completion_percentage = project.get_completion_percentage()
+    
     return render(request, 'users/employee_project_detail.html', {
         'project': project,
         'collaborators': collaborators,
-        'user_role': user_role
+        'user_role': user_role,
+        'completion_percentage': completion_percentage
     })
 
 

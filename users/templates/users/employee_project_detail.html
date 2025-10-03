@@ -79,21 +79,14 @@
                 <div class="mt-6">
                     <div class="flex items-center justify-between mb-2">
                         <span class="text-gray-400 text-sm">Project Progress</span>
-                        <span class="text-white text-sm">
-                            {% if project.status == 'PLANNING' %}0%
-                            {% elif project.status == 'IN_PROGRESS' %}50%
-                            {% elif project.status == 'COMPLETED' %}100%
-                            {% else %}25%{% endif %}
-                        </span>
+                        <span class="text-white text-sm">{{ completion_percentage }}%</span>
                     </div>
                     <div class="w-full bg-slate-700 rounded-full h-2">
-                        <div class="h-2 rounded-full transition-all duration-300
-                            {% if project.status == 'PLANNING' %}bg-blue-500 w-0
-                            {% elif project.status == 'IN_PROGRESS' %}bg-green-500 w-1/2
-                            {% elif project.status == 'COMPLETED' %}bg-purple-500 w-full
-                            {% else %}bg-yellow-500 w-1/4{% endif %}">
+                        <div class="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-300"
+                             style="width: {{ completion_percentage }}%">
                         </div>
                     </div>
+                    <p class="text-gray-500 text-xs mt-2">Based on task completion</p>
                 </div>
             </div>
 

@@ -77,6 +77,19 @@ class Project(models.Model):
     def __str__(self):
         return self.name
     
+    def get_completion_percentage(self):
+        """Calculate project completion based on task completion"""
+        # Get all tasks related to this project
+        project_tasks = self.project_tasks.all()
+        total_tasks = project_tasks.count()
+        
+        if total_tasks == 0:
+            return 0
+        
+        # Calculate based on completed tasks
+        completed_tasks = project_tasks.filter(status='COMPLETED').count()
+        return round((completed_tasks / total_tasks) * 100, 1)
+    
     class Meta:
         ordering = ['-created_at']
 
