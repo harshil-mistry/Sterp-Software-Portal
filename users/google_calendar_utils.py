@@ -286,16 +286,21 @@ class GoogleCalendarService:
         available, error = cls._check_availability()
         if not available:
             return False, error
+        
+        # Build description with project info if linked
+        description = (
+            f'Task: {task.name}\n'
+            f'Description: {task.description}\n'
+            f'Priority: {task.get_priority_display()}\n'
+            f'Assigned by: {task.created_by.get_full_name()}'
+        )
+        
+        if task.project:
+            description += f'\nProject: {task.project.name}'
             
         event_data = {
             'summary': f'Task Due: {task.name}',
-            'description': (
-                f'Task: {task.name}\n'
-                f'Description: {task.description}\n'
-                f'Priority: {task.get_priority_display()}\n'
-                f'Assigned by: {task.created_by.get_full_name()}'
-                + (f'\nEstimated Hours: {task.estimated_hours}' if task.estimated_hours else '')
-            ),
+            'description': description,
             'start': {
                 'date': task.date.isoformat(),
                 'timeZone': 'Asia/Kolkata',

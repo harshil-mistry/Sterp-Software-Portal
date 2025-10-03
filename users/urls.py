@@ -32,4 +32,6 @@ urlpatterns = [
     path('my-tasks/', views.employee_tasks, name='employee_tasks'),
     path('my-tasks/<int:pk>/', views.employee_task_detail, name='employee_task_detail'),
     path('my-tasks/<int:pk>/complete/', views.mark_task_completed, name='mark_task_completed'),
+    # AJAX endpoint for getting project employees
+    path('api/project/<str:project_id>/employees/', views.get_project_employees, name='get_project_employees'),
 ]

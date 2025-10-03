@@ -7,6 +7,7 @@ from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
 from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from datetime import date
 import time
 import logging
@@ -791,3 +792,29 @@ def mark_task_completed(request, pk):
         messages.success(request, f'Task "{task.name}" marked as completed!')
     
     return redirect('employee_tasks')
+
+
+@login_required
+@user_passes_test(is_admin)
+def get_project_employees(request, project_id):
+    """AJAX endpoint to get employees for a specific project"""
+    try:
+        if project_id == '0' or project_id == 'None':
+            # Return all non-admin employees
+            employees = Employee.objects.filter(is_superuser=False).values('id', 'first_name', 'last_name', 'username')
+        else:
+            # Get employees who are collaborators on this project
+            collaborators = ProjectCollaborator.objects.filter(project_id=project_id).select_related('employee')
+            employees = [
+                {
+                    'id': collab.employee.id,
+                    'first_name': collab.employee.first_name,
+                    'last_name': collab.employee.last_name,
+                    'username': collab.employee.username,
+                }
+                for collab in collaborators
+            ]
+        
+        return JsonResponse({'employees': list(employees)})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

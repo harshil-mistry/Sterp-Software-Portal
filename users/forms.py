@@ -208,7 +208,7 @@ class TaskCreationForm(forms.ModelForm):
     
     class Meta:
         model = Task
-        fields = ['name', 'description', 'employee', 'date', 'priority', 'estimated_hours']
+        fields = ['name', 'description', 'project', 'employee', 'date', 'priority']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
@@ -219,8 +219,13 @@ class TaskCreationForm(forms.ModelForm):
                 'rows': 4,
                 'placeholder': 'Describe the task in detail...'
             }),
+            'project': forms.Select(attrs={
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
+                'onchange': 'updateEmployeeOptions()'
+            }),
             'employee': forms.Select(attrs={
-                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
+                'id': 'id_employee'
             }),
             'date': forms.DateInput(attrs={
                 'type': 'date',
@@ -228,20 +233,39 @@ class TaskCreationForm(forms.ModelForm):
             }),
             'priority': forms.Select(attrs={
                 'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
-            }),
-            'estimated_hours': forms.NumberInput(attrs={
-                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
-                'step': '0.5',
-                'min': '0',
-                'placeholder': 'e.g., 2.5'
             })
         }
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Set up project field
+        self.fields['project'].queryset = Project.objects.all()
+        self.fields['project'].required = False
+        self.fields['project'].empty_label = "Not linked to any project"
+        
         # Only show non-admin employees in the dropdown
         self.fields['employee'].queryset = Employee.objects.filter(is_superuser=False)
         self.fields['employee'].empty_label = "Select an employee"
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        project = cleaned_data.get('project')
+        employee = cleaned_data.get('employee')
+        
+        # If project is selected, validate that employee is part of that project
+        if project and employee:
+            project_collaborators = ProjectCollaborator.objects.filter(
+                project=project,
+                employee=employee
+            ).exists()
+            
+            if not project_collaborators:
+                raise forms.ValidationError(
+                    f"{employee.get_full_name()} is not a collaborator on the selected project. "
+                    "Please select an employee who is part of this project or choose 'Not linked to any project'."
+                )
+        
+        return cleaned_data
     
     def save(self, commit=True, created_by=None):
         task = super().save(commit=False)
@@ -259,7 +283,7 @@ class TaskUpdateForm(forms.ModelForm):
     
     class Meta:
         model = Task
-        fields = ['name', 'description', 'employee', 'date', 'priority', 'estimated_hours', 'status']
+        fields = ['name', 'description', 'project', 'employee', 'date', 'priority', 'status']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
@@ -268,8 +292,13 @@ class TaskUpdateForm(forms.ModelForm):
                 'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
                 'rows': 4
             }),
+            'project': forms.Select(attrs={
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
+                'onchange': 'updateEmployeeOptions()'
+            }),
             'employee': forms.Select(attrs={
-                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
+                'id': 'id_employee'
             }),
             'date': forms.DateInput(attrs={
                 'type': 'date',
@@ -278,11 +307,6 @@ class TaskUpdateForm(forms.ModelForm):
             'priority': forms.Select(attrs={
                 'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
-            'estimated_hours': forms.NumberInput(attrs={
-                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
-                'step': '0.5',
-                'min': '0'
-            }),
             'status': forms.Select(attrs={
                 'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             })
@@ -290,7 +314,30 @@ class TaskUpdateForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['project'].queryset = Project.objects.all()
+        self.fields['project'].required = False
+        self.fields['project'].empty_label = "Not linked to any project"
         self.fields['employee'].queryset = Employee.objects.filter(is_superuser=False)
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        project = cleaned_data.get('project')
+        employee = cleaned_data.get('employee')
+        
+        # If project is selected, validate that employee is part of that project
+        if project and employee:
+            project_collaborators = ProjectCollaborator.objects.filter(
+                project=project,
+                employee=employee
+            ).exists()
+            
+            if not project_collaborators:
+                raise forms.ValidationError(
+                    f"{employee.get_full_name()} is not a collaborator on the selected project. "
+                    "Please select an employee who is part of this project or choose 'Not linked to any project'."
+                )
+        
+        return cleaned_data
 
 
 class TaskCompletionForm(forms.ModelForm):

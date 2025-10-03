@@ -144,6 +144,14 @@ class Task(models.Model):
         related_name='assigned_tasks',
         help_text="Employee assigned to this task"
     )
+    project = models.ForeignKey(
+        'Project',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='project_tasks',
+        help_text="Optional: Project this task is associated with"
+    )
     date = models.DateField(help_text="Date when the task should be completed")
     priority = models.CharField(
         max_length=10, 
@@ -176,13 +184,6 @@ class Task(models.Model):
         blank=True, 
         help_text="Notes added by employee when completing the task"
     )
-    estimated_hours = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
-        null=True, 
-        blank=True,
-        help_text="Estimated hours to complete this task"
-    )
     actual_hours = models.DecimalField(
         max_digits=5, 
         decimal_places=2, 
@@ -199,6 +200,7 @@ class Task(models.Model):
             models.Index(fields=['employee', 'date']),
             models.Index(fields=['status', 'date']),
             models.Index(fields=['created_by', 'created_at']),
+            models.Index(fields=['project']),
         ]
     
     def __str__(self):

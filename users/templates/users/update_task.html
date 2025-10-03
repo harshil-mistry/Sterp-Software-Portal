@@ -79,6 +79,23 @@
                     {% endif %}
                 </div>
 
+                <!-- Project Selection -->
+                <div>
+                    <label for="{{ form.project.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Link to Project
+                    </label>
+                    {{ form.project }}
+                    {% if form.project.errors %}
+                        <p class="mt-2 text-sm text-red-400">{{ form.project.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-2 text-sm text-gray-400">
+                        <svg class="w-4 h-4 inline mr-1 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Optional: If linked to a project, only employees from that project can be assigned.
+                    </p>
+                </div>
+
                 <!-- Employee and Date Row -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Assign to Employee -->
@@ -112,8 +129,8 @@
                     </div>
                 </div>
 
-                <!-- Priority, Hours, and Status Row -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Priority and Status Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Priority -->
                     <div>
                         <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
@@ -122,17 +139,6 @@
                         {{ form.priority }}
                         {% if form.priority.errors %}
                             <p class="mt-2 text-sm text-red-400">{{ form.priority.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Estimated Hours -->
-                    <div>
-                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
-                            Estimated Hours
-                        </label>
-                        {{ form.estimated_hours }}
-                        {% if form.estimated_hours.errors %}
-                            <p class="mt-2 text-sm text-red-400">{{ form.estimated_hours.errors.0 }}</p>
                         {% endif %}
                     </div>
 
@@ -150,6 +156,15 @@
                         </p>
                     </div>
                 </div>
+
+                <!-- Non-field errors (e.g., validation errors) -->
+                {% if form.non_field_errors %}
+                    <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                        {% for error in form.non_field_errors %}
+                            <p class="text-red-400 text-sm">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
                 <!-- Status Change Warning -->
                 {% if task.status == 'COMPLETED' %}
@@ -231,6 +246,56 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!confirm('Are you sure you want to reopen this completed task? This will clear the completion timestamp but preserve completion notes.')) {
                     this.value = originalStatus;
                 }
+            }
+        });
+    }
+    
+    // Handle project selection change - dynamically filter employees
+    const projectField = document.getElementById('{{ form.project.id_for_label }}');
+    const employeeField = document.getElementById('id_employee');
+    
+    if (projectField && employeeField) {
+        // Store all employees initially
+        const allEmployees = Array.from(employeeField.options).map(opt => ({
+            value: opt.value,
+            text: opt.text
+        }));
+        
+        projectField.addEventListener('change', function() {
+            const projectId = this.value;
+            const selectedEmployeeId = employeeField.value;
+            
+            if (!projectId || projectId === '') {
+                // No project selected - show all employees
+                employeeField.innerHTML = '';
+                allEmployees.forEach(emp => {
+                    const option = new Option(emp.text, emp.value);
+                    employeeField.add(option);
+                });
+                employeeField.value = selectedEmployeeId;
+            } else {
+                // Fetch employees for the selected project
+                fetch(`/api/project/${projectId}/employees/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        employeeField.innerHTML = '<option value="">Select an employee</option>';
+                        
+                        data.employees.forEach(emp => {
+                            const fullName = `${emp.first_name} ${emp.last_name}`.trim() || emp.username;
+                            const option = new Option(fullName, emp.id);
+                            employeeField.add(option);
+                        });
+                        
+                        // Try to maintain the selected employee if they're in the project
+                        const availableIds = data.employees.map(e => e.id.toString());
+                        if (selectedEmployeeId && availableIds.includes(selectedEmployeeId)) {
+                            employeeField.value = selectedEmployeeId;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching project employees:', error);
+                        alert('Error loading employees for this project');
+                    });
             }
         });
     }

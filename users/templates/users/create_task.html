@@ -54,6 +54,23 @@
                     {% endif %}
                 </div>
 
+                <!-- Project Selection -->
+                <div>
+                    <label for="{{ form.project.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Link to Project
+                    </label>
+                    {{ form.project }}
+                    {% if form.project.errors %}
+                        <p class="mt-2 text-sm text-red-400">{{ form.project.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-2 text-sm text-gray-400">
+                        <svg class="w-4 h-4 inline mr-1 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Optional: If linked to a project, only employees from that project can be assigned.
+                    </p>
+                </div>
+
                 <!-- Employee and Date Row -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Assign to Employee -->
@@ -79,31 +96,25 @@
                     </div>
                 </div>
 
-                <!-- Priority and Estimated Hours Row -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Priority -->
-                    <div>
-                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
-                            Priority
-                        </label>
-                        {{ form.priority }}
-                        {% if form.priority.errors %}
-                            <p class="mt-2 text-sm text-red-400">{{ form.priority.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-
-                    <!-- Estimated Hours -->
-                    <div>
-                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
-                            Estimated Hours
-                        </label>
-                        {{ form.estimated_hours }}
-                        {% if form.estimated_hours.errors %}
-                            <p class="mt-2 text-sm text-red-400">{{ form.estimated_hours.errors.0 }}</p>
-                        {% endif %}
-                        <p class="mt-2 text-sm text-gray-500">Optional: Enter estimated hours to complete this task</p>
-                    </div>
+                <!-- Priority -->
+                <div>
+                    <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Priority
+                    </label>
+                    {{ form.priority }}
+                    {% if form.priority.errors %}
+                        <p class="mt-2 text-sm text-red-400">{{ form.priority.errors.0 }}</p>
+                    {% endif %}
                 </div>
+
+                <!-- Non-field errors (e.g., validation errors) -->
+                {% if form.non_field_errors %}
+                    <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                        {% for error in form.non_field_errors %}
+                            <p class="text-red-400 text-sm">{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
 
                 <!-- Quick Task Templates -->
                 <div class="bg-slate-700/30 rounded-2xl p-6 border border-slate-600/50">
@@ -116,22 +127,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                         <button type="button" class="task-template text-left p-4 bg-slate-800/50 border border-slate-600/50 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300"
                                 data-name="Daily Report Submission"
-                                data-description="Submit daily work report including completed tasks, challenges faced, and plans for tomorrow."
-                                data-hours="0.5">
+                                data-description="Submit daily work report including completed tasks, challenges faced, and plans for tomorrow.">
                             <div class="font-medium text-white mb-1">Daily Report</div>
                             <div class="text-sm text-gray-400">Submit daily work report</div>
                         </button>
                         <button type="button" class="task-template text-left p-4 bg-slate-800/50 border border-slate-600/50 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300"
                                 data-name="Code Review"
-                                data-description="Review assigned code changes, check for best practices, and provide feedback to team members."
-                                data-hours="2.0">
+                                data-description="Review assigned code changes, check for best practices, and provide feedback to team members.">
                             <div class="font-medium text-white mb-1">Code Review</div>
                             <div class="text-sm text-gray-400">Review and provide feedback</div>
                         </button>
                         <button type="button" class="task-template text-left p-4 bg-slate-800/50 border border-slate-600/50 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300"
                                 data-name="Client Meeting Preparation"
-                                data-description="Prepare presentation materials, review project status, and gather necessary documents for client meeting."
-                                data-hours="1.5">
+                                data-description="Prepare presentation materials, review project status, and gather necessary documents for client meeting.">
                             <div class="font-medium text-white mb-1">Meeting Prep</div>
                             <div class="text-sm text-gray-400">Prepare for client meeting</div>
                         </button>
@@ -166,13 +174,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const templates = document.querySelectorAll('.task-template');
     const nameField = document.getElementById('{{ form.name.id_for_label }}');
     const descriptionField = document.getElementById('{{ form.description.id_for_label }}');
-    const hoursField = document.getElementById('{{ form.estimated_hours.id_for_label }}');
     
     templates.forEach(template => {
         template.addEventListener('click', function() {
             nameField.value = this.dataset.name;
             descriptionField.value = this.dataset.description;
-            hoursField.value = this.dataset.hours;
             
             // Visual feedback
             templates.forEach(t => {
@@ -183,6 +189,56 @@ document.addEventListener('DOMContentLoaded', function() {
             this.classList.add('border-blue-500/50', 'bg-blue-500/10');
         });
     });
+    
+    // Handle project selection change - dynamically filter employees
+    const projectField = document.getElementById('{{ form.project.id_for_label }}');
+    const employeeField = document.getElementById('id_employee');
+    
+    if (projectField && employeeField) {
+        // Store all employees initially
+        const allEmployees = Array.from(employeeField.options).map(opt => ({
+            value: opt.value,
+            text: opt.text
+        }));
+        
+        projectField.addEventListener('change', function() {
+            const projectId = this.value;
+            const selectedEmployeeId = employeeField.value;
+            
+            if (!projectId || projectId === '') {
+                // No project selected - show all employees
+                employeeField.innerHTML = '';
+                allEmployees.forEach(emp => {
+                    const option = new Option(emp.text, emp.value);
+                    employeeField.add(option);
+                });
+                employeeField.value = selectedEmployeeId;
+            } else {
+                // Fetch employees for the selected project
+                fetch(`/api/project/${projectId}/employees/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        employeeField.innerHTML = '<option value="">Select an employee</option>';
+                        
+                        data.employees.forEach(emp => {
+                            const fullName = `${emp.first_name} ${emp.last_name}`.trim() || emp.username;
+                            const option = new Option(fullName, emp.id);
+                            employeeField.add(option);
+                        });
+                        
+                        // Try to maintain the selected employee if they're in the project
+                        const availableIds = data.employees.map(e => e.id.toString());
+                        if (selectedEmployeeId && availableIds.includes(selectedEmployeeId)) {
+                            employeeField.value = selectedEmployeeId;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching project employees:', error);
+                        alert('Error loading employees for this project');
+                    });
+            }
+        });
+    }
 });
 </script>
 {% endblock %}
