@@ -211,26 +211,26 @@ class TaskCreationForm(forms.ModelForm):
         fields = ['name', 'description', 'employee', 'date', 'priority', 'estimated_hours']
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
                 'placeholder': 'Enter task title'
             }),
             'description': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
                 'rows': 4,
                 'placeholder': 'Describe the task in detail...'
             }),
             'employee': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
             'date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
             'priority': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
             'estimated_hours': forms.NumberInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
                 'step': '0.5',
                 'min': '0',
                 'placeholder': 'e.g., 2.5'
@@ -262,29 +262,29 @@ class TaskUpdateForm(forms.ModelForm):
         fields = ['name', 'description', 'employee', 'date', 'priority', 'estimated_hours', 'status']
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
             'description': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
                 'rows': 4
             }),
             'employee': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
             'date': forms.DateInput(attrs={
                 'type': 'date',
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
             'priority': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             }),
             'estimated_hours': forms.NumberInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
                 'step': '0.5',
                 'min': '0'
             }),
             'status': forms.Select(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
             })
         }
     

@@ -4,48 +4,53 @@
 {% block title %}Create Task{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-4xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Create New Task</h1>
-                    <p class="mt-1 text-sm text-gray-600">Assign a new task to an employee</p>
-                </div>
-                <div class="flex space-x-3">
-                    <a href="{% url 'task_list' %}" 
-                       class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+<div class="max-w-4xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">Create New Task</h1>
+                <p class="text-gray-400">Assign a new task to an employee</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'task_list' %}" 
+                   class="group relative px-6 py-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-2xl text-white font-semibold transition-all duration-300 border border-slate-600/50">
+                    <span class="relative z-10 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
                         Back to Tasks
-                    </a>
-                </div>
+                    </span>
+                </a>
             </div>
         </div>
+    </div>
 
-        <!-- Task Creation Form -->
-        <div class="bg-white shadow rounded-lg p-6">
+    <!-- Task Creation Form -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl border border-slate-700/50 overflow-hidden">
+        <div class="p-8">
             <form method="post" class="space-y-6">
                 {% csrf_token %}
                 
                 <!-- Task Name -->
                 <div>
-                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Task Name <span class="text-red-500">*</span>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Task Name <span class="text-red-400">*</span>
                     </label>
                     {{ form.name }}
                     {% if form.name.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-400">{{ form.name.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Description -->
                 <div>
-                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Description <span class="text-red-500">*</span>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Description <span class="text-red-400">*</span>
                     </label>
                     {{ form.description }}
                     {% if form.description.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-400">{{ form.description.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -53,23 +58,23 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Assign to Employee -->
                     <div>
-                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Assign to Employee <span class="text-red-500">*</span>
+                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                            Assign to Employee <span class="text-red-400">*</span>
                         </label>
                         {{ form.employee }}
                         {% if form.employee.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.employee.errors.0 }}</p>
                         {% endif %}
                     </div>
 
                     <!-- Due Date -->
                     <div>
-                        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Due Date <span class="text-red-500">*</span>
+                        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                            Due Date <span class="text-red-400">*</span>
                         </label>
                         {{ form.date }}
                         {% if form.date.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.date.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.date.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -78,65 +83,76 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Priority -->
                     <div>
-                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
                             Priority
                         </label>
                         {{ form.priority }}
                         {% if form.priority.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.priority.errors.0 }}</p>
                         {% endif %}
                     </div>
 
                     <!-- Estimated Hours -->
                     <div>
-                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
                             Estimated Hours
                         </label>
                         {{ form.estimated_hours }}
                         {% if form.estimated_hours.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.estimated_hours.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.estimated_hours.errors.0 }}</p>
                         {% endif %}
-                        <p class="mt-1 text-sm text-gray-500">Optional: Enter estimated hours to complete this task</p>
+                        <p class="mt-2 text-sm text-gray-500">Optional: Enter estimated hours to complete this task</p>
                     </div>
                 </div>
 
                 <!-- Quick Task Templates -->
-                <div class="bg-gray-50 rounded-lg p-4">
-                    <h3 class="text-sm font-medium text-gray-700 mb-3">Quick Task Templates</h3>
+                <div class="bg-slate-700/30 rounded-2xl p-6 border border-slate-600/50">
+                    <h3 class="text-sm font-medium text-gray-300 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                        </svg>
+                        Quick Task Templates
+                    </h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <button type="button" class="task-template text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                        <button type="button" class="task-template text-left p-4 bg-slate-800/50 border border-slate-600/50 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300"
                                 data-name="Daily Report Submission"
                                 data-description="Submit daily work report including completed tasks, challenges faced, and plans for tomorrow."
                                 data-hours="0.5">
-                            <div class="font-medium text-gray-900">Daily Report</div>
-                            <div class="text-sm text-gray-500">Submit daily work report</div>
+                            <div class="font-medium text-white mb-1">Daily Report</div>
+                            <div class="text-sm text-gray-400">Submit daily work report</div>
                         </button>
-                        <button type="button" class="task-template text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                        <button type="button" class="task-template text-left p-4 bg-slate-800/50 border border-slate-600/50 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300"
                                 data-name="Code Review"
                                 data-description="Review assigned code changes, check for best practices, and provide feedback to team members."
                                 data-hours="2.0">
-                            <div class="font-medium text-gray-900">Code Review</div>
-                            <div class="text-sm text-gray-500">Review and provide feedback</div>
+                            <div class="font-medium text-white mb-1">Code Review</div>
+                            <div class="text-sm text-gray-400">Review and provide feedback</div>
                         </button>
-                        <button type="button" class="task-template text-left p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-colors"
+                        <button type="button" class="task-template text-left p-4 bg-slate-800/50 border border-slate-600/50 rounded-xl hover:border-blue-500/50 hover:bg-blue-500/10 transition-all duration-300"
                                 data-name="Client Meeting Preparation"
                                 data-description="Prepare presentation materials, review project status, and gather necessary documents for client meeting."
                                 data-hours="1.5">
-                            <div class="font-medium text-gray-900">Meeting Prep</div>
-                            <div class="text-sm text-gray-500">Prepare for client meeting</div>
+                            <div class="font-medium text-white mb-1">Meeting Prep</div>
+                            <div class="text-sm text-gray-400">Prepare for client meeting</div>
                         </button>
                     </div>
                 </div>
 
                 <!-- Form Actions -->
-                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <div class="flex justify-end space-x-3 pt-6 border-t border-slate-700/50">
                     <a href="{% url 'task_list' %}" 
-                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                       class="px-6 py-3 bg-slate-700/50 hover:bg-slate-600/50 text-white font-semibold rounded-2xl transition-all duration-300 border border-slate-600/50">
                         Cancel
                     </a>
                     <button type="submit" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        <i class="fas fa-plus mr-2"></i>Create Task
+                            class="group relative px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl text-white font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+                        <span class="relative z-10 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Create Task
+                        </span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                     </button>
                 </div>
             </form>
@@ -159,8 +175,12 @@ document.addEventListener('DOMContentLoaded', function() {
             hoursField.value = this.dataset.hours;
             
             // Visual feedback
-            templates.forEach(t => t.classList.remove('border-blue-500', 'bg-blue-50'));
-            this.classList.add('border-blue-500', 'bg-blue-50');
+            templates.forEach(t => {
+                t.classList.remove('border-blue-500/50', 'bg-blue-500/10');
+                t.classList.add('border-slate-600/50', 'bg-slate-800/50');
+            });
+            this.classList.remove('border-slate-600/50', 'bg-slate-800/50');
+            this.classList.add('border-blue-500/50', 'bg-blue-500/10');
         });
     });
 });

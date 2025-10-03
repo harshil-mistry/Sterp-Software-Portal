@@ -4,18 +4,26 @@
 {% block title %}Edit Task: {{ task.name }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-slate-800/50 backdrop-blur-lg shadow-xl rounded-3xl p-8 mb-6 border border-slate-700/50">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Edit Task</h1>
-                    <p class="mt-1 text-sm text-gray-600">Update task details and assignment</p>
+                    <h1 class="text-4xl font-bold text-white flex items-center">
+                        <svg class="w-10 h-10 mr-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Edit Task
+                    </h1>
+                    <p class="mt-2 text-lg text-gray-400">Update task details and assignment</p>
                 </div>
                 <div class="flex space-x-3">
                     <a href="{% url 'task_detail' task.pk %}" 
-                       class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                       class="bg-slate-700/50 hover:bg-slate-600/50 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center border border-slate-600/50">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
                         Back to Task
                     </a>
                 </div>
@@ -23,19 +31,21 @@
         </div>
 
         <!-- Current Task Info -->
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+        <div class="bg-gradient-to-br from-blue-500/10 to-indigo-500/10 border border-blue-500/30 rounded-2xl p-6 mb-6 backdrop-blur-lg">
             <div class="flex">
                 <div class="flex-shrink-0">
-                    <i class="fas fa-info-circle text-blue-400"></i>
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
-                <div class="ml-3">
-                    <h3 class="text-sm font-medium text-blue-800">Current Task Information</h3>
-                    <div class="mt-2 text-sm text-blue-700">
-                        <p><strong>Assigned to:</strong> {{ task.employee.get_full_name }}</p>
-                        <p><strong>Status:</strong> {{ task.get_status_display }}</p>
-                        <p><strong>Due:</strong> {{ task.date|date:"M d, Y" }}</p>
+                <div class="ml-4">
+                    <h3 class="text-lg font-semibold text-blue-300 mb-3">Current Task Information</h3>
+                    <div class="text-sm text-blue-200 space-y-2">
+                        <p><strong class="text-white">Assigned to:</strong> {{ task.employee.get_full_name }}</p>
+                        <p><strong class="text-white">Status:</strong> {{ task.get_status_display }}</p>
+                        <p><strong class="text-white">Due:</strong> {{ task.date|date:"M d, Y" }}</p>
                         {% if task.status == 'COMPLETED' %}
-                            <p><strong>Completed:</strong> {{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
+                            <p><strong class="text-white">Completed:</strong> {{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -43,29 +53,29 @@
         </div>
 
         <!-- Task Update Form -->
-        <div class="bg-white shadow rounded-lg p-6">
+        <div class="bg-slate-800/50 backdrop-blur-lg shadow-xl rounded-3xl p-8 border border-slate-700/50">
             <form method="post" class="space-y-6">
                 {% csrf_token %}
                 
                 <!-- Task Name -->
                 <div>
-                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Task Name <span class="text-red-500">*</span>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Task Name <span class="text-red-400">*</span>
                     </label>
                     {{ form.name }}
                     {% if form.name.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-400">{{ form.name.errors.0 }}</p>
                     {% endif %}
                 </div>
 
                 <!-- Description -->
                 <div>
-                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                        Description <span class="text-red-500">*</span>
+                    <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Description <span class="text-red-400">*</span>
                     </label>
                     {{ form.description }}
                     {% if form.description.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.description.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-400">{{ form.description.errors.0 }}</p>
                     {% endif %}
                 </div>
 
@@ -73,16 +83,18 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Assign to Employee -->
                     <div>
-                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Assign to Employee <span class="text-red-500">*</span>
+                        <label for="{{ form.employee.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                            Assign to Employee <span class="text-red-400">*</span>
                         </label>
                         {{ form.employee }}
                         {% if form.employee.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.employee.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.employee.errors.0 }}</p>
                         {% endif %}
                         {% if task.status == 'COMPLETED' %}
-                            <p class="mt-1 text-sm text-amber-600">
-                                <i class="fas fa-exclamation-triangle mr-1"></i>
+                            <p class="mt-2 text-sm text-amber-400 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
                                 Note: Changing the employee for a completed task will affect completion records.
                             </p>
                         {% endif %}
@@ -90,12 +102,12 @@
 
                     <!-- Due Date -->
                     <div>
-                        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-700">
-                            Due Date <span class="text-red-500">*</span>
+                        <label for="{{ form.date.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                            Due Date <span class="text-red-400">*</span>
                         </label>
                         {{ form.date }}
                         {% if form.date.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.date.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.date.errors.0 }}</p>
                         {% endif %}
                     </div>
                 </div>
@@ -104,36 +116,36 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Priority -->
                     <div>
-                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
                             Priority
                         </label>
                         {{ form.priority }}
                         {% if form.priority.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.priority.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.priority.errors.0 }}</p>
                         {% endif %}
                     </div>
 
                     <!-- Estimated Hours -->
                     <div>
-                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label for="{{ form.estimated_hours.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
                             Estimated Hours
                         </label>
                         {{ form.estimated_hours }}
                         {% if form.estimated_hours.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.estimated_hours.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.estimated_hours.errors.0 }}</p>
                         {% endif %}
                     </div>
 
                     <!-- Status -->
                     <div>
-                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
                             Status
                         </label>
                         {{ form.status }}
                         {% if form.status.errors %}
-                            <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                            <p class="mt-2 text-sm text-red-400">{{ form.status.errors.0 }}</p>
                         {% endif %}
-                        <p class="mt-1 text-sm text-gray-500">
+                        <p class="mt-2 text-sm text-gray-400">
                             Change status to mark task as completed or reopen a completed task
                         </p>
                     </div>
@@ -141,16 +153,18 @@
 
                 <!-- Status Change Warning -->
                 {% if task.status == 'COMPLETED' %}
-                <div class="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                <div class="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-2xl p-6 backdrop-blur-lg">
                     <div class="flex">
                         <div class="flex-shrink-0">
-                            <i class="fas fa-exclamation-triangle text-amber-400"></i>
+                            <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                            </svg>
                         </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-amber-800">Task Status Change</h3>
-                            <div class="mt-2 text-sm text-amber-700">
-                                <p>This task is currently marked as completed. If you change the status back to pending:</p>
-                                <ul class="mt-1 list-disc list-inside">
+                        <div class="ml-4">
+                            <h3 class="text-lg font-semibold text-amber-300 mb-2">Task Status Change</h3>
+                            <div class="text-sm text-amber-200">
+                                <p class="mb-2">This task is currently marked as completed. If you change the status back to pending:</p>
+                                <ul class="space-y-1 list-disc list-inside text-amber-100">
                                     <li>The completion timestamp will be cleared</li>
                                     <li>Completion notes and actual hours will be preserved</li>
                                     <li>The employee can complete the task again</li>
@@ -163,30 +177,41 @@
 
                 <!-- Completion Information (if completed) -->
                 {% if task.status == 'COMPLETED' %}
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h3 class="text-sm font-medium text-green-800 mb-2">Completion Information</h3>
-                    <div class="text-sm text-green-700 space-y-1">
-                        <p><strong>Completed:</strong> {{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
+                <div class="bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-2xl p-6 backdrop-blur-lg">
+                    <h3 class="text-lg font-semibold text-green-300 mb-3 flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        Completion Information
+                    </h3>
+                    <div class="text-sm text-green-200 space-y-2">
+                        <p><strong class="text-white">Completed:</strong> {{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
                         {% if task.actual_hours %}
-                            <p><strong>Time Spent:</strong> {{ task.actual_hours }} hour{{ task.actual_hours|pluralize }}</p>
+                            <p><strong class="text-white">Time Spent:</strong> {{ task.actual_hours }} hour{{ task.actual_hours|pluralize }}</p>
                         {% endif %}
                         {% if task.completion_notes %}
-                            <p><strong>Notes:</strong></p>
-                            <p class="whitespace-pre-line bg-white p-2 rounded border">{{ task.completion_notes }}</p>
+                            <p><strong class="text-white">Notes:</strong></p>
+                            <p class="whitespace-pre-line bg-slate-700/50 p-4 rounded-xl border border-slate-600/50 text-gray-300">{{ task.completion_notes }}</p>
                         {% endif %}
                     </div>
                 </div>
                 {% endif %}
 
                 <!-- Form Actions -->
-                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <div class="flex justify-end space-x-3 pt-6 border-t border-slate-700/50">
                     <a href="{% url 'task_detail' task.pk %}" 
-                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                       class="bg-slate-700/50 hover:bg-slate-600/50 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 border border-slate-600/50 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
                         Cancel
                     </a>
                     <button type="submit" 
-                            class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        <i class="fas fa-save mr-2"></i>Update Task
+                            class="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Update Task
                     </button>
                 </div>
             </form>

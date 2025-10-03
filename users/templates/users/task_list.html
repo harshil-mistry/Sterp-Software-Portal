@@ -4,208 +4,252 @@
 {% block title %}Task Management{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-gray-900">Task Management</h1>
-                    <p class="mt-1 text-sm text-gray-600">Manage and track employee tasks</p>
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-white mb-2">Task Management</h1>
+                <p class="text-gray-400">Manage and track all employee tasks</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'admin_dashboard' %}" 
+                   class="px-6 py-3 bg-slate-700/50 hover:bg-slate-600/50 rounded-2xl text-white font-semibold transition-all duration-300 border border-slate-600/50">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                    </svg>
+                    Back to Dashboard
+                </a>
+                <a href="{% url 'create_task' %}" 
+                   class="group relative px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl text-white font-semibold transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
+                    <span class="relative z-10 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Create Task
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
                 </div>
-                <div class="flex space-x-3">
-                    <a href="{% url 'admin_dashboard' %}" 
-                       class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Back to Dashboard
-                    </a>
-                    <a href="{% url 'create_task' %}" 
-                       class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                        <i class="fas fa-plus mr-2"></i>Create Task
-                    </a>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Total Tasks</h3>
+                    <p class="text-3xl font-bold text-white mt-1">{{ total_tasks }}</p>
                 </div>
             </div>
         </div>
-
-        <!-- Task Statistics -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-            <div class="bg-white shadow rounded-lg p-6">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-tasks text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">Total Tasks</h3>
-                        <p class="text-2xl font-semibold text-gray-900">{{ total_tasks }}</p>
-                    </div>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
-            </div>
-            <div class="bg-white shadow rounded-lg p-6">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-clock text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">Pending</h3>
-                        <p class="text-2xl font-semibold text-gray-900">{{ pending_tasks }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white shadow rounded-lg p-6">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-check text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">Completed</h3>
-                        <p class="text-2xl font-semibold text-gray-900">{{ completed_tasks }}</p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white shadow rounded-lg p-6">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mr-3">
-                        <i class="fas fa-exclamation-triangle text-white text-sm"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-medium text-gray-500">Overdue</h3>
-                        <p class="text-2xl font-semibold text-gray-900">{{ overdue_tasks }}</p>
-                    </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Pending</h3>
+                    <p class="text-3xl font-bold text-white mt-1">{{ pending_tasks }}</p>
                 </div>
             </div>
         </div>
-
-        <!-- Filters -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                <div>
-                    <label for="employee" class="block text-sm font-medium text-gray-700">Employee</label>
-                    <select name="employee" id="employee" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="">All Employees</option>
-                        {% for employee in employees %}
-                            <option value="{{ employee.id }}" {% if employee.id|stringformat:"s" == selected_employee %}selected{% endif %}>
-                                {{ employee.get_full_name }}
-                            </option>
-                        {% endfor %}
-                    </select>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
                 <div>
-                    <label for="status" class="block text-sm font-medium text-gray-700">Status</label>
-                    <select name="status" id="status" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                        <option value="">All Statuses</option>
-                        <option value="PENDING" {% if selected_status == "PENDING" %}selected{% endif %}>Pending</option>
-                        <option value="COMPLETED" {% if selected_status == "COMPLETED" %}selected{% endif %}>Completed</option>
-                    </select>
+                    <h3 class="text-sm font-medium text-gray-400">Completed</h3>
+                    <p class="text-3xl font-bold text-white mt-1">{{ completed_tasks }}</p>
                 </div>
-                <div>
-                    <label for="date_from" class="block text-sm font-medium text-gray-700">Date From</label>
-                    <input type="date" name="date_from" id="date_from" value="{{ selected_date_from }}" 
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="date_to" class="block text-sm font-medium text-gray-700">Date To</label>
-                    <input type="date" name="date_to" id="date_to" value="{{ selected_date_to }}"
-                           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm">
-                </div>
-                <div class="flex items-end">
-                    <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
-                        Filter
-                    </button>
-                </div>
-            </form>
+            </div>
         </div>
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center">
+                <div class="w-12 h-12 bg-red-500/20 rounded-xl flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                </div>
+                <div>
+                    <h3 class="text-sm font-medium text-gray-400">Overdue</h3>
+                    <p class="text-3xl font-bold text-white mt-1">{{ overdue_tasks }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        <!-- Tasks Table -->
-        <div class="bg-white shadow rounded-lg overflow-hidden">
-            {% if tasks %}
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+    <!-- Filters -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div>
+                <label for="employee" class="block text-sm font-medium text-gray-300 mb-2">Employee</label>
+                <select name="employee" id="employee" class="block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <option value="">All Employees</option>
+                    {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if employee.id|stringformat:"s" == selected_employee %}selected{% endif %}>
+                            {{ employee.get_full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="status" class="block text-sm font-medium text-gray-300 mb-2">Status</label>
+                <select name="status" id="status" class="block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                    <option value="">All Statuses</option>
+                    <option value="PENDING" {% if selected_status == "PENDING" %}selected{% endif %}>Pending</option>
+                    <option value="COMPLETED" {% if selected_status == "COMPLETED" %}selected{% endif %}>Completed</option>
+                </select>
+            </div>
+            <div>
+                <label for="date_from" class="block text-sm font-medium text-gray-300 mb-2">Date From</label>
+                <input type="date" name="date_from" id="date_from" value="{{ selected_date_from }}" 
+                       class="block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
+            <div>
+                <label for="date_to" class="block text-sm font-medium text-gray-300 mb-2">Date To</label>
+                <input type="date" name="date_to" id="date_to" value="{{ selected_date_to }}"
+                       class="block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+            </div>
+            <div class="flex items-end">
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold py-2.5 px-4 rounded-xl transition-all duration-300">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
+                    </svg>
+                    Filter
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Tasks Table -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl border border-slate-700/50 overflow-hidden">
+        {% if tasks %}
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-slate-700">
+                    <thead class="bg-slate-700/50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Task</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Employee</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Due Date</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Priority</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Status</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Created</th>
+                            <th class="px-6 py-4 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
+                    <tbody class="bg-slate-800/30 divide-y divide-slate-700">
                         {% for task in tasks %}
-                            <tr {% if task.is_overdue %}class="bg-red-50"{% endif %}>
-                                <td class="px-6 py-4 whitespace-nowrap">
+                            <tr class="hover:bg-slate-700/30 transition-colors duration-300 {% if task.is_overdue %}bg-red-500/10{% endif %}">
+                                <td class="px-6 py-4">
                                     <div>
-                                        <div class="text-sm font-medium text-gray-900">{{ task.name }}</div>
-                                        <div class="text-sm text-gray-500">{{ task.description|truncatechars:50 }}</div>
+                                        <div class="text-sm font-medium text-white">{{ task.name }}</div>
+                                        <div class="text-sm text-gray-400">{{ task.description|truncatechars:50 }}</div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ task.employee.get_full_name }}</div>
-                                    <div class="text-sm text-gray-500">{{ task.employee.department }}</div>
+                                    <div class="text-sm text-white">{{ task.employee.get_full_name }}</div>
+                                    <div class="text-sm text-gray-400">{{ task.employee.department }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-gray-900">{{ task.date|date:"M d, Y" }}</div>
+                                    <div class="text-sm text-white">{{ task.date|date:"M d, Y" }}</div>
                                     {% if task.is_overdue %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30">
                                             Overdue
                                         </span>
                                     {% elif task.days_until_due == 0 %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-400 border border-yellow-500/30">
                                             Due Today
                                         </span>
                                     {% elif task.days_until_due and task.days_until_due <= 3 %}
-                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-500/20 text-orange-400 border border-orange-500/30">
                                             Due in {{ task.days_until_due }} day{{ task.days_until_due|pluralize }}
                                         </span>
                                     {% endif %}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {% if task.priority == 'LOW' %}bg-gray-100 text-gray-800
-                                        {% elif task.priority == 'MEDIUM' %}bg-blue-100 text-blue-800
-                                        {% elif task.priority == 'HIGH' %}bg-orange-100 text-orange-800
-                                        {% else %}bg-red-100 text-red-800{% endif %}">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                        {% if task.priority == 'LOW' %}bg-gray-500/20 text-gray-400 border-gray-500/30
+                                        {% elif task.priority == 'MEDIUM' %}bg-blue-500/20 text-blue-400 border-blue-500/30
+                                        {% elif task.priority == 'HIGH' %}bg-orange-500/20 text-orange-400 border-orange-500/30
+                                        {% else %}bg-red-500/20 text-red-400 border-red-500/30{% endif %}">
                                         {{ task.get_priority_display }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {% if task.status == 'PENDING' %}bg-yellow-100 text-yellow-800
-                                        {% else %}bg-green-100 text-green-800{% endif %}">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border
+                                        {% if task.status == 'PENDING' %}bg-yellow-500/20 text-yellow-400 border-yellow-500/30
+                                        {% else %}bg-green-500/20 text-green-400 border-green-500/30{% endif %}">
                                         {{ task.get_status_display }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-400">
                                     {{ task.created_at|date:"M d, Y" }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="{% url 'task_detail' task.pk %}" class="text-indigo-600 hover:text-indigo-900 mr-3">View</a>
-                                    <a href="{% url 'update_task' task.pk %}" class="text-blue-600 hover:text-blue-900 mr-3">Edit</a>
-                                    <form method="post" action="{% url 'delete_task' task.pk %}" class="inline" 
-                                          onsubmit="return confirm('Are you sure you want to delete this task?');">
-                                        {% csrf_token %}
-                                        <button type="submit" class="text-red-600 hover:text-red-900">Delete</button>
-                                    </form>
+                                    <div class="flex items-center space-x-2">
+                                        <a href="{% url 'task_detail' task.pk %}" 
+                                           class="inline-flex items-center p-2 text-blue-400 hover:text-blue-300 hover:bg-blue-500/20 rounded-xl transition-all duration-300">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                            </svg>
+                                        </a>
+                                        <a href="{% url 'update_task' task.pk %}" 
+                                           class="inline-flex items-center p-2 text-green-400 hover:text-green-300 hover:bg-green-500/20 rounded-xl transition-all duration-300">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                            </svg>
+                                        </a>
+                                        <form method="post" action="{% url 'delete_task' task.pk %}" class="inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                            {% csrf_token %}
+                                            <button type="submit" 
+                                                    class="inline-flex items-center p-2 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded-xl transition-all duration-300">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
-            {% else %}
-                <div class="text-center py-12">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                    </svg>
-                    <h3 class="mt-2 text-sm font-medium text-gray-900">No tasks found</h3>
-                    <p class="mt-1 text-sm text-gray-500">Get started by creating a new task.</p>
-                    <div class="mt-6">
-                        <a href="{% url 'create_task' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
-                            <i class="fas fa-plus mr-2"></i>
-                            New Task
-                        </a>
-                    </div>
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-16 w-16 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-white">No tasks found</h3>
+                <p class="mt-2 text-sm text-gray-400">Get started by creating a new task for your team.</p>
+                <div class="mt-6">
+                    <a href="{% url 'create_task' %}" 
+                       class="group relative inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl text-white font-semibold transition-all duration-300 transform hover:scale-105">
+                        <span class="relative z-10 flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                            Create New Task
+                        </span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-purple-700 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    </a>
                 </div>
-            {% endif %}
-        </div>
+            </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
