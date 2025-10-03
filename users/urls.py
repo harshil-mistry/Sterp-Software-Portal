@@ -6,6 +6,7 @@ urlpatterns = [
     path('', views.home, name='home'),
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('create-employee/', views.create_employee, name='create_employee'),
+    path('employee/<int:pk>/', views.employee_detail, name='employee_detail'),
     path('profile/', views.employee_profile, name='employee_profile'),
     path('login/', views.CustomLoginView.as_view(), name='login'),
     path('logout/', auth_views.LogoutView.as_view(next_page='login', template_name='users/logout.html'), name='logout'),

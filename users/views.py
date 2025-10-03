@@ -95,6 +95,74 @@ def delete_employee(request, pk):
         return redirect('admin_dashboard')
 
 @login_required
+@user_passes_test(is_admin)
+def employee_detail(request, pk):
+    """Admin view to see detailed employee information and task contributions"""
+    employee = get_object_or_404(Employee, pk=pk)
+    
+    # Get all projects where employee is a collaborator
+    project_collaborations = ProjectCollaborator.objects.filter(employee=employee).select_related('project')
+    projects = [collab.project for collab in project_collaborations]
+    
+    # Get all tasks assigned to this employee
+    tasks = Task.objects.filter(employee=employee).select_related('project').order_by('-date')
+    
+    # Calculate task statistics
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(status='COMPLETED').count()
+    pending_tasks = tasks.filter(status='PENDING').count()
+    in_progress_tasks = tasks.filter(status='IN_PROGRESS').count()
+    overdue_tasks = tasks.filter(status__in=['PENDING', 'IN_PROGRESS'], date__lt=date.today()).count()
+    
+    # Calculate completion percentage
+    completion_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+    
+    # Group tasks by project
+    tasks_by_project = {}
+    for project in projects:
+        project_tasks = tasks.filter(project=project)
+        if project_tasks.exists():
+            tasks_by_project[project] = {
+                'total': project_tasks.count(),
+                'completed': project_tasks.filter(status='COMPLETED').count(),
+                'pending': project_tasks.filter(status='PENDING').count(),
+                'in_progress': project_tasks.filter(status='IN_PROGRESS').count(),
+            }
+    
+    # Tasks without project
+    tasks_no_project = tasks.filter(project__isnull=True)
+    if tasks_no_project.exists():
+        tasks_by_project[None] = {
+            'total': tasks_no_project.count(),
+            'completed': tasks_no_project.filter(status='COMPLETED').count(),
+            'pending': tasks_no_project.filter(status='PENDING').count(),
+            'in_progress': tasks_no_project.filter(status='IN_PROGRESS').count(),
+        }
+    
+    # Calculate monthly tasks completed (last 30 days)
+    from datetime import timedelta
+    thirty_days_ago = date.today() - timedelta(days=30)
+    monthly_completed = tasks.filter(status='COMPLETED', completed_at__gte=thirty_days_ago).count()
+    
+    context = {
+        'employee': employee,
+        'projects': projects,
+        'project_collaborations': project_collaborations,
+        'tasks': tasks,
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'in_progress_tasks': in_progress_tasks,
+        'overdue_tasks': overdue_tasks,
+        'completion_percentage': round(completion_percentage, 1),
+        'tasks_by_project': tasks_by_project,
+        'monthly_completed': monthly_completed,
+        'total_projects': len(projects),
+    }
+    
+    return render(request, 'users/employee_detail.html', context)
+
+@login_required
 def employee_profile(request):
     return render(request, 'users/employee_profile.html')
 
