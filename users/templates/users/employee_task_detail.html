@@ -4,36 +4,39 @@
 {% block title %}Task: {{ task.name }}{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+<div class="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-4xl mx-auto">
         <!-- Header -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
+        <div class="bg-slate-800/50 backdrop-blur-lg shadow-xl rounded-3xl p-8 mb-6 border border-slate-700/50">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900">{{ task.name }}</h1>
-                    <div class="flex items-center space-x-3 mt-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            {% if task.priority == 'LOW' %}bg-gray-100 text-gray-800
-                            {% elif task.priority == 'MEDIUM' %}bg-blue-100 text-blue-800
-                            {% elif task.priority == 'HIGH' %}bg-orange-100 text-orange-800
-                            {% else %}bg-red-100 text-red-800{% endif %}">
+                    <h1 class="text-4xl font-bold text-white mb-3">{{ task.name }}</h1>
+                    <div class="flex items-center flex-wrap gap-3">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            {% if task.priority == 'LOW' %}bg-gray-500/20 text-gray-300 border border-gray-500/30
+                            {% elif task.priority == 'MEDIUM' %}bg-blue-500/20 text-blue-300 border border-blue-500/30
+                            {% elif task.priority == 'HIGH' %}bg-orange-500/20 text-orange-300 border border-orange-500/30
+                            {% else %}bg-red-500/20 text-red-300 border border-red-500/30{% endif %}">
                             {{ task.get_priority_display }} Priority
                         </span>
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            {% if task.status == 'PENDING' %}bg-yellow-100 text-yellow-800
-                            {% else %}bg-green-100 text-green-800{% endif %}">
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
+                            {% if task.status == 'PENDING' %}bg-yellow-500/20 text-yellow-300 border border-yellow-500/30
+                            {% else %}bg-green-500/20 text-green-300 border border-green-500/30{% endif %}">
                             {{ task.get_status_display }}
                         </span>
                         {% if task.is_overdue %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                                </svg>
                                 Overdue
                             </span>
                         {% elif task.days_until_due == 0 %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300 border border-yellow-500/30">
                                 Due Today
                             </span>
                         {% elif task.days_until_due and task.days_until_due <= 3 %}
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-500/20 text-orange-300 border border-orange-500/30">
                                 Due in {{ task.days_until_due }} day{{ task.days_until_due|pluralize }}
                             </span>
                         {% endif %}
@@ -41,7 +44,10 @@
                 </div>
                 <div class="flex space-x-3">
                     <a href="{% url 'employee_tasks' %}" 
-                       class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">
+                       class="bg-slate-700/50 hover:bg-slate-600/50 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 flex items-center border border-slate-600/50">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                        </svg>
                         Back to Tasks
                     </a>
                 </div>
@@ -49,79 +55,98 @@
         </div>
 
         <!-- Task Details -->
-        <div class="bg-white shadow rounded-lg p-6 mb-6">
-            <h2 class="text-lg font-semibold text-gray-900 mb-4">Task Description</h2>
-            <p class="text-gray-700 whitespace-pre-line">{{ task.description }}</p>
+        <div class="bg-slate-800/50 backdrop-blur-lg shadow-xl rounded-2xl p-6 mb-6 border border-slate-700/50">
+            <h2 class="text-xl font-semibold text-white mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                Task Description
+            </h2>
+            <p class="text-gray-300 whitespace-pre-line leading-relaxed">{{ task.description }}</p>
         </div>
 
         <!-- Task Information -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             <!-- Task Details -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Task Information</h3>
-                <dl class="space-y-3">
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Due Date</dt>
-                        <dd class="text-sm text-gray-900">{{ task.date|date:"l, M d, Y" }}</dd>
+            <div class="bg-slate-800/50 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-slate-700/50">
+                <h3 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Task Information
+                </h3>
+                <dl class="space-y-4">
+                    <div class="border-b border-slate-700/50 pb-3">
+                        <dt class="text-sm font-medium text-gray-400 mb-1">Due Date</dt>
+                        <dd class="text-base text-white font-medium">{{ task.date|date:"l, M d, Y" }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Assigned Date</dt>
-                        <dd class="text-sm text-gray-900">{{ task.created_at|date:"M d, Y \a\t g:i A" }}</dd>
+                    <div class="border-b border-slate-700/50 pb-3">
+                        <dt class="text-sm font-medium text-gray-400 mb-1">Assigned Date</dt>
+                        <dd class="text-base text-white">{{ task.created_at|date:"M d, Y \a\t g:i A" }}</dd>
                     </div>
-                    <div>
-                        <dt class="text-sm font-medium text-gray-500">Assigned By</dt>
-                        <dd class="text-sm text-gray-900">{{ task.created_by.get_full_name }}</dd>
+                    <div class="border-b border-slate-700/50 pb-3">
+                        <dt class="text-sm font-medium text-gray-400 mb-1">Assigned By</dt>
+                        <dd class="text-base text-white">{{ task.created_by.get_full_name }}</dd>
                     </div>
                     {% if task.estimated_hours %}
                     <div>
-                        <dt class="text-sm font-medium text-gray-500">Estimated Time</dt>
-                        <dd class="text-sm text-gray-900">{{ task.estimated_hours }} hour{{ task.estimated_hours|pluralize }}</dd>
+                        <dt class="text-sm font-medium text-gray-400 mb-1">Estimated Time</dt>
+                        <dd class="text-base text-white">{{ task.estimated_hours }} hour{{ task.estimated_hours|pluralize }}</dd>
                     </div>
                     {% endif %}
                 </dl>
             </div>
 
             <!-- Completion Status -->
-            <div class="bg-white shadow rounded-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Completion Status</h3>
+            <div class="bg-slate-800/50 backdrop-blur-lg shadow-xl rounded-2xl p-6 border border-slate-700/50">
+                <h3 class="text-xl font-semibold text-white mb-4 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Completion Status
+                </h3>
                 {% if task.status == 'COMPLETED' %}
-                    <div class="space-y-3">
-                        <div class="flex items-center text-green-600">
-                            <i class="fas fa-check-circle text-2xl mr-3"></i>
+                    <div class="space-y-4">
+                        <div class="flex items-center p-4 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border border-green-500/30 rounded-xl">
+                            <svg class="w-8 h-8 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
                             <div>
-                                <p class="font-semibold">Task Completed</p>
-                                <p class="text-sm text-gray-600">{{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
+                                <p class="font-semibold text-green-300">Task Completed</p>
+                                <p class="text-sm text-green-200">{{ task.completed_at|date:"M d, Y \a\t g:i A" }}</p>
                             </div>
                         </div>
                         
                         {% if task.actual_hours %}
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Time Spent</dt>
-                            <dd class="text-sm text-gray-900">{{ task.actual_hours }} hour{{ task.actual_hours|pluralize }}</dd>
+                        <div class="border-b border-slate-700/50 pb-3">
+                            <dt class="text-sm font-medium text-gray-400 mb-1">Time Spent</dt>
+                            <dd class="text-base text-white">{{ task.actual_hours }} hour{{ task.actual_hours|pluralize }}</dd>
                         </div>
                         {% endif %}
                         
                         {% if task.completion_notes %}
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500">Completion Notes</dt>
-                            <dd class="text-sm text-gray-900 whitespace-pre-line">{{ task.completion_notes }}</dd>
+                        <div class="border-b border-slate-700/50 pb-3">
+                            <dt class="text-sm font-medium text-gray-400 mb-1">Completion Notes</dt>
+                            <dd class="text-sm text-gray-300 whitespace-pre-line bg-slate-700/30 p-3 rounded-lg">{{ task.completion_notes }}</dd>
                         </div>
                         {% endif %}
                         
                         {% if task.time_to_complete %}
                         <div>
-                            <dt class="text-sm font-medium text-gray-500">Total Time to Complete</dt>
-                            <dd class="text-sm text-gray-900">{{ task.time_to_complete.days }} day{{ task.time_to_complete.days|pluralize }}</dd>
+                            <dt class="text-sm font-medium text-gray-400 mb-1">Total Time to Complete</dt>
+                            <dd class="text-base text-white">{{ task.time_to_complete.days }} day{{ task.time_to_complete.days|pluralize }}</dd>
                         </div>
                         {% endif %}
                     </div>
                 {% else %}
                     <div class="space-y-4">
-                        <div class="flex items-center text-yellow-600">
-                            <i class="fas fa-clock text-2xl mr-3"></i>
+                        <div class="flex items-center p-4 bg-gradient-to-br from-yellow-500/10 to-amber-500/10 border border-yellow-500/30 rounded-xl">
+                            <svg class="w-8 h-8 text-yellow-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
                             <div>
-                                <p class="font-semibold">Task Pending</p>
-                                <p class="text-sm text-gray-600">Please complete this task by {{ task.date|date:"M d, Y" }}</p>
+                                <p class="font-semibold text-yellow-300">Task Pending</p>
+                                <p class="text-sm text-yellow-200">Please complete by {{ task.date|date:"M d, Y" }}</p>
                             </div>
                         </div>
                         
@@ -129,9 +154,12 @@
                         <form method="post" action="{% url 'mark_task_completed' task.pk %}" class="inline">
                             {% csrf_token %}
                             <button type="submit" 
-                                    class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg"
+                                    class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center justify-center"
                                     onclick="return confirm('Mark this task as completed? You can add notes in the detailed completion form below.');">
-                                <i class="fas fa-check mr-2"></i>Quick Complete
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                </svg>
+                                Quick Complete
                             </button>
                         </form>
                     </div>
@@ -141,46 +169,57 @@
 
         <!-- Completion Form (only for pending tasks) -->
         {% if task.status == 'PENDING' and form %}
-        <div class="bg-white shadow rounded-lg p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Complete Task with Details</h3>
-            <p class="text-gray-600 mb-6">Add completion notes and actual time spent to help track your productivity.</p>
+        <div class="bg-slate-800/50 backdrop-blur-lg shadow-xl rounded-2xl p-8 border border-slate-700/50">
+            <h3 class="text-2xl font-semibold text-white mb-3 flex items-center">
+                <svg class="w-7 h-7 mr-2 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Complete Task with Details
+            </h3>
+            <p class="text-gray-400 mb-6">Add completion notes and actual time spent to help track your productivity.</p>
             
             <form method="post" class="space-y-6">
                 {% csrf_token %}
                 
                 <!-- Completion Notes -->
                 <div>
-                    <label for="{{ form.completion_notes.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    <label for="{{ form.completion_notes.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
                         Completion Notes
                     </label>
                     {{ form.completion_notes }}
                     {% if form.completion_notes.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.completion_notes.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-400">{{ form.completion_notes.errors.0 }}</p>
                     {% endif %}
-                    <p class="mt-1 text-sm text-gray-500">Optional: Add any notes about how you completed the task, challenges faced, or outcomes achieved.</p>
+                    <p class="mt-2 text-sm text-gray-400">Optional: Add any notes about how you completed the task, challenges faced, or outcomes achieved.</p>
                 </div>
 
                 <!-- Actual Hours -->
                 <div>
-                    <label for="{{ form.actual_hours.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                    <label for="{{ form.actual_hours.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
                         Actual Hours Spent
                     </label>
                     {{ form.actual_hours }}
                     {% if form.actual_hours.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.actual_hours.errors.0 }}</p>
+                        <p class="mt-2 text-sm text-red-400">{{ form.actual_hours.errors.0 }}</p>
                     {% endif %}
-                    <p class="mt-1 text-sm text-gray-500">Optional: Enter the actual time you spent on this task for productivity tracking.</p>
+                    <p class="mt-2 text-sm text-gray-400">Optional: Enter the actual time you spent on this task for productivity tracking.</p>
                 </div>
 
                 <!-- Form Actions -->
-                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                <div class="flex justify-end space-x-3 pt-6 border-t border-slate-700/50">
                     <a href="{% url 'employee_tasks' %}" 
-                       class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded">
+                       class="bg-slate-700/50 hover:bg-slate-600/50 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 border border-slate-600/50 flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
                         Cancel
                     </a>
                     <button type="submit" 
-                            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
-                        <i class="fas fa-check mr-2"></i>Mark as Completed
+                            class="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        Mark as Completed
                     </button>
                 </div>
             </form>

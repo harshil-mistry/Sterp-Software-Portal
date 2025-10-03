@@ -56,7 +56,7 @@ class GoogleCalendarService:
         authorization_url, state = flow.authorization_url(
             access_type='offline',
             include_granted_scopes='true',
-            prompt='select_account'
+            prompt='consent'
         )
         
         # Store state in session for security
@@ -276,6 +276,42 @@ class GoogleCalendarService:
                     {'method': 'popup', 'minutes': 15},      # 15 minutes before
                 ],
             },
+        }
+        
+        return cls.create_event(employee, event_data)
+    
+    @classmethod
+    def create_task_deadline_event(cls, employee, task):
+        """Create a task deadline event in employee's calendar"""
+        available, error = cls._check_availability()
+        if not available:
+            return False, error
+            
+        event_data = {
+            'summary': f'Task Due: {task.name}',
+            'description': (
+                f'Task: {task.name}\n'
+                f'Description: {task.description}\n'
+                f'Priority: {task.get_priority_display()}\n'
+                f'Assigned by: {task.created_by.get_full_name()}'
+                + (f'\nEstimated Hours: {task.estimated_hours}' if task.estimated_hours else '')
+            ),
+            'start': {
+                'date': task.date.isoformat(),
+                'timeZone': 'Asia/Kolkata',
+            },
+            'end': {
+                'date': task.date.isoformat(),
+                'timeZone': 'Asia/Kolkata',
+            },
+            'reminders': {
+                'useDefault': False,
+                'overrides': [
+                    {'method': 'email', 'minutes': 24 * 60},  # 1 day before
+                    {'method': 'popup', 'minutes': 60},       # 1 hour before
+                ],
+            },
+            'colorId': '11',  # Red color for tasks to make them stand out
         }
         
         return cls.create_event(employee, event_data)

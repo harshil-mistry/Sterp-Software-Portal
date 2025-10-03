@@ -301,12 +301,12 @@ class TaskCompletionForm(forms.ModelForm):
         fields = ['completion_notes', 'actual_hours']
         widgets = {
             'completion_notes': forms.Textarea(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
-                'rows': 3,
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
+                'rows': 4,
                 'placeholder': 'Add any notes about the completed task (optional)...'
             }),
             'actual_hours': forms.NumberInput(attrs={
-                'class': 'mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2',
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
                 'step': '0.5',
                 'min': '0',
                 'placeholder': 'e.g., 3.0'

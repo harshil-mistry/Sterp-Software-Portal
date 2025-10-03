@@ -646,6 +646,22 @@ def create_task(request):
         if form.is_valid():
             task = form.save(created_by=request.user)
             messages.success(request, f'Task "{task.name}" assigned to {task.employee.get_full_name()} successfully!')
+            
+            # Sync task with Google Calendar if employee has connected their calendar
+            try:
+                if hasattr(task.employee, 'google_calendar_credentials'):
+                    success, message = GoogleCalendarService.create_task_deadline_event(
+                        task.employee, 
+                        task
+                    )
+                    if success:
+                        logger.info(f"Task '{task.name}' synced to {task.employee.get_full_name()}'s Google Calendar")
+                    else:
+                        logger.warning(f"Failed to sync task to calendar: {message}")
+            except Exception as e:
+                # Don't fail task creation if calendar sync fails
+                logger.error(f"Error syncing task to Google Calendar: {str(e)}")
+            
             return redirect('task_list')
         else:
             messages.error(request, 'Please correct the errors below.')
