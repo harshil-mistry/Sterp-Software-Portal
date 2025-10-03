@@ -161,5 +161,253 @@
             </div>
         </div>
     </div>
+
+    <!-- Tasks Section -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+        <div class="flex items-center justify-between mb-8">
+            <h2 class="text-2xl font-bold text-white">Project Tasks</h2>
+            <a href="{% url 'create_task' %}" 
+               class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+                Create Task
+            </a>
+        </div>
+
+        <!-- Task Statistics Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+            <!-- Total Tasks -->
+            <div class="bg-gradient-to-br from-blue-500/10 to-blue-600/10 rounded-2xl p-6 border border-blue-500/20">
+                <div class="flex items-center mb-3">
+                    <svg class="w-8 h-8 text-blue-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white mb-1">{{ total_tasks }}</p>
+                <p class="text-blue-300 text-sm font-medium">Total Tasks</p>
+            </div>
+
+            <!-- Completed Tasks -->
+            <div class="bg-gradient-to-br from-green-500/10 to-emerald-600/10 rounded-2xl p-6 border border-green-500/20">
+                <div class="flex items-center mb-3">
+                    <svg class="w-8 h-8 text-green-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white mb-1">{{ completed_tasks }}</p>
+                <p class="text-green-300 text-sm font-medium">Completed</p>
+            </div>
+
+            <!-- In Progress Tasks -->
+            <div class="bg-gradient-to-br from-yellow-500/10 to-orange-600/10 rounded-2xl p-6 border border-yellow-500/20">
+                <div class="flex items-center mb-3">
+                    <svg class="w-8 h-8 text-yellow-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white mb-1">{{ in_progress_tasks }}</p>
+                <p class="text-yellow-300 text-sm font-medium">In Progress</p>
+            </div>
+
+            <!-- Pending Tasks -->
+            <div class="bg-gradient-to-br from-purple-500/10 to-pink-600/10 rounded-2xl p-6 border border-purple-500/20">
+                <div class="flex items-center mb-3">
+                    <svg class="w-8 h-8 text-purple-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white mb-1">{{ pending_tasks }}</p>
+                <p class="text-purple-300 text-sm font-medium">Pending</p>
+            </div>
+
+            <!-- Overdue Tasks -->
+            <div class="bg-gradient-to-br from-red-500/10 to-pink-600/10 rounded-2xl p-6 border border-red-500/20">
+                <div class="flex items-center mb-3">
+                    <svg class="w-8 h-8 text-red-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <p class="text-3xl font-bold text-white mb-1">{{ overdue_tasks }}</p>
+                <p class="text-red-300 text-sm font-medium">Overdue</p>
+            </div>
+        </div>
+
+        <!-- Completion Progress Bar -->
+        <div class="bg-slate-700/30 rounded-2xl p-6 mb-8">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-gray-300 font-medium">Overall Task Completion</span>
+                <span class="text-white font-bold text-lg">{{ completion_percentage }}%</span>
+            </div>
+            <div class="w-full bg-slate-700 rounded-full h-3">
+                <div class="bg-gradient-to-r from-green-500 to-emerald-600 h-3 rounded-full transition-all duration-500" 
+                     style="width: {{ completion_percentage }}%">
+                </div>
+            </div>
+        </div>
+
+        <!-- Tasks by Employee Section -->
+        {% if tasks_by_employee %}
+        <div class="mb-8">
+            <h3 class="text-xl font-bold text-white mb-4">Task Distribution by Team Member</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for employee, stats in tasks_by_employee.items %}
+                    {% if stats.total > 0 %}
+                    <div class="bg-slate-700/30 rounded-2xl p-5">
+                        <div class="flex items-center mb-4">
+                            <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-3">
+                                <span class="text-white font-bold text-sm">{{ employee.first_name|first|upper }}</span>
+                            </div>
+                            <div>
+                                <h4 class="text-white font-semibold">{{ employee.get_full_name }}</h4>
+                                <p class="text-gray-400 text-xs">{{ stats.total }} task{{ stats.total|pluralize }}</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-green-400">✓ Completed</span>
+                                <span class="text-white font-medium">{{ stats.completed }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-yellow-400">⏳ In Progress</span>
+                                <span class="text-white font-medium">{{ stats.in_progress }}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-purple-400">○ Pending</span>
+                                <span class="text-white font-medium">{{ stats.pending }}</span>
+                            </div>
+                        </div>
+                        {% if stats.total > 0 %}
+                        <div class="mt-4 pt-4 border-t border-slate-600/50">
+                            <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+                                <span>Progress</span>
+                                <span>{{ stats.completed }}/{{ stats.total }}</span>
+                            </div>
+                            <div class="w-full bg-slate-700 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-green-500 to-emerald-600 h-2 rounded-full transition-all duration-500" 
+                                     style="width: {% widthratio stats.completed stats.total 100 %}%">
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tasks List Table -->
+        {% if tasks %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-slate-700">
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Task Name</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Assigned To</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Status</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Priority</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Due Date</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Completed</th>
+                        <th class="text-center py-4 px-4 text-gray-400 font-medium text-sm">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr class="border-b border-slate-700/50 hover:bg-slate-700/20 transition-colors">
+                        <td class="py-4 px-4">
+                            <div class="flex items-center">
+                                {% if task.status == 'COMPLETED' %}
+                                <svg class="w-5 h-5 text-green-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {% elif task.status == 'IN_PROGRESS' %}
+                                <svg class="w-5 h-5 text-yellow-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {% else %}
+                                <svg class="w-5 h-5 text-gray-400 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                {% endif %}
+                                <span class="text-white font-medium">{{ task.name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center mr-2">
+                                    <span class="text-white font-bold text-xs">{{ task.employee.first_name|first|upper }}</span>
+                                </div>
+                                <span class="text-gray-300 text-sm">{{ task.employee.get_full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium
+                                {% if task.status == 'COMPLETED' %}bg-green-500/20 text-green-400
+                                {% elif task.status == 'IN_PROGRESS' %}bg-yellow-500/20 text-yellow-400
+                                {% else %}bg-purple-500/20 text-purple-400{% endif %}">
+                                {{ task.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium
+                                {% if task.priority == 'LOW' %}bg-gray-500/20 text-gray-400
+                                {% elif task.priority == 'MEDIUM' %}bg-blue-500/20 text-blue-400
+                                {% elif task.priority == 'HIGH' %}bg-orange-500/20 text-orange-400
+                                {% else %}bg-red-500/20 text-red-400{% endif %}">
+                                {{ task.get_priority_display }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4">
+                            <div class="text-sm">
+                                <span class="{% if task.date < today and task.status != 'COMPLETED' %}text-red-400{% else %}text-gray-300{% endif %}">
+                                    {{ task.date|date:"M d, Y" }}
+                                </span>
+                                {% if task.date < today and task.status != 'COMPLETED' %}
+                                <span class="block text-xs text-red-400">Overdue</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="py-4 px-4">
+                            {% if task.completed_at %}
+                            <span class="text-green-400 text-sm">{{ task.completed_at|date:"M d, Y" }}</span>
+                            {% else %}
+                            <span class="text-gray-500 text-sm">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-4">
+                            <div class="flex items-center justify-center space-x-2">
+                                <a href="{% url 'task_detail' task.pk %}" 
+                                   class="text-blue-400 hover:text-blue-300 transition-colors"
+                                   title="View Details">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'update_task' task.pk %}" 
+                                   class="text-yellow-400 hover:text-yellow-300 transition-colors"
+                                   title="Edit Task">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <p class="text-gray-400 text-lg">No tasks assigned to this project yet</p>
+            <p class="text-gray-500 text-sm mt-2">Create a new task and link it to this project to track progress</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

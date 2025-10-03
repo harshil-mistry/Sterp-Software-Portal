@@ -172,9 +172,42 @@ def create_project(request):
 def project_detail(request, pk):
     project = Project.objects.get(pk=pk)
     collaborators = ProjectCollaborator.objects.filter(project=project).select_related('employee')
+    
+    # Get all tasks associated with this project
+    tasks = Task.objects.filter(project=project).select_related('employee').order_by('-date')
+    
+    # Calculate task statistics
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(status='COMPLETED').count()
+    pending_tasks = tasks.filter(status='PENDING').count()
+    in_progress_tasks = tasks.filter(status='IN_PROGRESS').count()
+    overdue_tasks = tasks.filter(status__in=['PENDING', 'IN_PROGRESS'], date__lt=date.today()).count()
+    
+    # Calculate completion percentage
+    completion_percentage = (completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
+    
+    # Group tasks by employee for tracking
+    tasks_by_employee = {}
+    for collaborator in collaborators:
+        employee_tasks = tasks.filter(employee=collaborator.employee)
+        tasks_by_employee[collaborator.employee] = {
+            'total': employee_tasks.count(),
+            'completed': employee_tasks.filter(status='COMPLETED').count(),
+            'pending': employee_tasks.filter(status='PENDING').count(),
+            'in_progress': employee_tasks.filter(status='IN_PROGRESS').count(),
+        }
+    
     return render(request, 'users/project_detail.html', {
         'project': project,
-        'collaborators': collaborators
+        'collaborators': collaborators,
+        'tasks': tasks,
+        'total_tasks': total_tasks,
+        'completed_tasks': completed_tasks,
+        'pending_tasks': pending_tasks,
+        'in_progress_tasks': in_progress_tasks,
+        'overdue_tasks': overdue_tasks,
+        'completion_percentage': round(completion_percentage, 1),
+        'tasks_by_employee': tasks_by_employee,
     })
 
 @login_required
