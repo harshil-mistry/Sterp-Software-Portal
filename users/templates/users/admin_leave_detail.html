@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex items-center mb-8">
+        <a href="{% url 'admin_leave_requests' %}" 
+           class="mr-4 w-10 h-10 bg-slate-800/50 hover:bg-slate-700/50 rounded-xl flex items-center justify-center border border-slate-700/50 transition-all">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+        </a>
+        <div>
+            <h1 class="text-4xl font-bold text-white mb-2">Leave Application Review</h1>
+            <p class="text-gray-400">Review and take action on leave request</p>
+        </div>
+    </div>
+
+    <!-- Status Banner -->
+    <div class="{% if application.status == 'APPROVED' %}bg-green-500/20 border-green-500/30
+                {% elif application.status == 'REJECTED' %}bg-red-500/20 border-red-500/30
+                {% elif application.status == 'PENDING' %}bg-yellow-500/20 border-yellow-500/30
+                {% else %}bg-gray-500/20 border-gray-500/30{% endif %} 
+                border rounded-2xl p-6 backdrop-blur-sm">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center">
+                <div class="w-12 h-12 rounded-xl flex items-center justify-center mr-4
+                    {% if application.status == 'APPROVED' %}bg-green-500/20
+                    {% elif application.status == 'REJECTED' %}bg-red-500/20
+                    {% elif application.status == 'PENDING' %}bg-yellow-500/20
+                    {% else %}bg-gray-500/20{% endif %}">
+                    {% if application.status == 'APPROVED' %}
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% elif application.status == 'REJECTED' %}
+                    <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% elif application.status == 'PENDING' %}
+                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    {% else %}
+                    <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold
+                        {% if application.status == 'APPROVED' %}text-green-400
+                        {% elif application.status == 'REJECTED' %}text-red-400
+                        {% elif application.status == 'PENDING' %}text-yellow-400
+                        {% else %}text-gray-400{% endif %}">
+                        Status: {{ application.get_status_display }}
+                    </h3>
+                    <p class="text-gray-300 text-sm mt-1">
+                        {% if application.status == 'APPROVED' %}
+                            Approved by {{ application.reviewed_by.get_full_name }} on {{ application.reviewed_at|date:"M d, Y" }}
+                        {% elif application.status == 'REJECTED' %}
+                            Rejected by {{ application.reviewed_by.get_full_name }} on {{ application.reviewed_at|date:"M d, Y" }}
+                        {% elif application.status == 'PENDING' %}
+                            Awaiting your review
+                        {% else %}
+                            Cancelled by employee
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+            
+            {% if application.status == 'PENDING' %}
+            <div class="flex space-x-3">
+                <button onclick="document.getElementById('approve-modal').classList.remove('hidden')"
+                        class="inline-flex items-center px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Approve
+                </button>
+                <button onclick="document.getElementById('reject-modal').classList.remove('hidden')"
+                        class="inline-flex items-center px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-all duration-200">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Reject
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Employee Info -->
+        <div class="lg:col-span-1">
+            <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-6 border border-slate-700/50">
+                <h2 class="text-xl font-bold text-white mb-6 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    Employee
+                </h2>
+                
+                <div class="flex flex-col items-center mb-6">
+                    <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mb-3">
+                        <span class="text-white font-bold text-2xl">{{ application.employee.first_name|first|upper }}</span>
+                    </div>
+                    <h3 class="text-lg font-semibold text-white">{{ application.employee.get_full_name }}</h3>
+                    <p class="text-gray-400 text-sm">{{ application.employee.department }}</p>
+                    <p class="text-gray-500 text-xs mt-1">{{ application.employee.position|default:"Employee" }}</p>
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
+                        <span class="text-gray-400 text-sm">Employee ID</span>
+                        <span class="text-white text-sm font-medium">{{ application.employee.employee_id }}</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-slate-700/50">
+                        <span class="text-gray-400 text-sm">Email</span>
+                        <span class="text-white text-sm">{{ application.employee.email }}</span>
+                    </div>
+                </div>
+
+                <a href="{% url 'employee_leave_summary' application.employee.id %}" 
+                   class="mt-6 w-full inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-all duration-200">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    View Leave Summary
+                </a>
+            </div>
+
+            <!-- Leave Balance -->
+            {% if leave_balance %}
+            <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-6 border border-slate-700/50 mt-6">
+                <h2 class="text-xl font-bold text-white mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                    </svg>
+                    Balance Info
+                </h2>
+                
+                <div class="bg-slate-700/30 rounded-xl p-4">
+                    <p class="text-gray-400 text-sm mb-2">{{ leave_balance.leave_type.name }} ({{ leave_balance.year }})</p>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-300 text-sm">Total</span>
+                        <span class="text-white font-bold">{{ leave_balance.total_days }}</span>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-gray-300 text-sm">Used</span>
+                        <span class="text-orange-400 font-bold">{{ leave_balance.used_days }}</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-2 border-t border-slate-600/50">
+                        <span class="text-gray-300 text-sm">Remaining</span>
+                        <span class="text-green-400 font-bold text-lg">{{ leave_balance.remaining_days }}</span>
+                    </div>
+                </div>
+
+                {% if application.status == 'PENDING' %}
+                <div class="mt-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-xl">
+                    <p class="text-blue-400 text-sm">
+                        {% if leave_balance.remaining_days >= application.total_days %}
+                        ✓ Sufficient balance available
+                        {% else %}
+                        ⚠ Insufficient balance (needs {{ application.total_days }}, has {{ leave_balance.remaining_days }})
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Application Details -->
+        <div class="lg:col-span-2">
+            <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+                <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Application Details
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Leave Type</label>
+                        <div class="bg-slate-700/30 rounded-xl p-3 border border-slate-600/30">
+                            <span class="text-white font-medium">{{ application.leave_type.name }}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Total Days</label>
+                        <div class="bg-slate-700/30 rounded-xl p-3 border border-slate-600/30">
+                            <span class="text-white font-bold text-xl">{{ application.total_days }}</span>
+                            <span class="text-gray-400 text-sm ml-2">day{{ application.total_days|pluralize }}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Start Date</label>
+                        <div class="bg-slate-700/30 rounded-xl p-3 border border-slate-600/30">
+                            <span class="text-white">{{ application.start_date|date:"F d, Y" }}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">End Date</label>
+                        <div class="bg-slate-700/30 rounded-xl p-3 border border-slate-600/30">
+                            <span class="text-white">{{ application.end_date|date:"F d, Y" }}</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Applied On</label>
+                        <div class="bg-slate-700/30 rounded-xl p-3 border border-slate-600/30">
+                            <span class="text-white">{{ application.applied_at|date:"F d, Y" }}</span>
+                            <span class="text-gray-400 text-sm ml-2">{{ application.applied_at|date:"g:i A" }}</span>
+                        </div>
+                    </div>
+
+                    {% if application.reviewed_at %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-400 mb-2">Reviewed On</label>
+                        <div class="bg-slate-700/30 rounded-xl p-3 border border-slate-600/30">
+                            <span class="text-white">{{ application.reviewed_at|date:"F d, Y" }}</span>
+                            <span class="text-gray-400 text-sm ml-2">{{ application.reviewed_at|date:"g:i A" }}</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Reason for Leave</label>
+                    <div class="bg-slate-700/30 rounded-xl p-4 border border-slate-600/30">
+                        <p class="text-white leading-relaxed">{{ application.reason }}</p>
+                    </div>
+                </div>
+
+                {% if application.admin_remarks %}
+                <div class="mt-6">
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Admin Remarks</label>
+                    <div class="bg-slate-700/30 rounded-xl p-4 border border-slate-600/30">
+                        <p class="text-white leading-relaxed">{{ application.admin_remarks }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Approve Modal -->
+<div id="approve-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 rounded-3xl max-w-md w-full p-8 border border-slate-700">
+        <h3 class="text-2xl font-bold text-white mb-4">Approve Leave Application</h3>
+        <p class="text-gray-400 mb-6">Are you sure you want to approve this leave request? {{ application.total_days }} day(s) will be deducted from the employee's {{ application.leave_type.name }} balance.</p>
+        
+        <form method="post" action="{% url 'approve_leave' application.pk %}">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label for="approve_remarks" class="block text-sm font-medium text-gray-300 mb-2">Remarks (Optional)</label>
+                <textarea id="approve_remarks" name="admin_remarks" rows="3"
+                          class="w-full px-4 py-3 bg-slate-700/50 text-white border border-slate-600 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
+                          placeholder="Add any comments or notes..."></textarea>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button type="button" onclick="document.getElementById('approve-modal').classList.add('hidden')"
+                        class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-all">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-xl transition-all">
+                    Approve
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Reject Modal -->
+<div id="reject-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-800 rounded-3xl max-w-md w-full p-8 border border-slate-700">
+        <h3 class="text-2xl font-bold text-white mb-4">Reject Leave Application</h3>
+        <p class="text-gray-400 mb-6">Please provide a reason for rejecting this leave request.</p>
+        
+        <form method="post" action="{% url 'reject_leave' application.pk %}">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label for="reject_remarks" class="block text-sm font-medium text-gray-300 mb-2">Reason for Rejection <span class="text-red-400">*</span></label>
+                <textarea id="reject_remarks" name="admin_remarks" rows="4" required
+                          class="w-full px-4 py-3 bg-slate-700/50 text-white border border-slate-600 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all resize-none"
+                          placeholder="Explain why this leave request is being rejected..."></textarea>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button type="button" onclick="document.getElementById('reject-modal').classList.add('hidden')"
+                        class="flex-1 px-4 py-3 bg-slate-700 hover:bg-slate-600 text-white font-medium rounded-xl transition-all">
+                    Cancel
+                </button>
+                <button type="submit"
+                        class="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-xl transition-all">
+                    Reject
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

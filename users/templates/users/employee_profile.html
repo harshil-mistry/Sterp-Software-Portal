@@ -43,7 +43,7 @@
     </div>
 
     <!-- Quick Navigation -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <!-- My Projects -->
         <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
             <div class="flex items-center mb-4">
@@ -79,6 +79,25 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
                 </svg>
                 View My Tasks
+            </a>
+        </div>
+
+        <!-- My Leaves -->
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-orange-600/20 rounded-lg flex items-center justify-center mr-4">
+                    <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+                <h3 class="text-lg font-semibold text-white">My Leaves</h3>
+            </div>
+            <p class="text-gray-400 text-sm mb-4">Manage your leave applications and track balances</p>
+            <a href="{% url 'employee_leave_dashboard' %}" class="inline-flex items-center text-orange-400 hover:text-orange-300 text-sm">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                View My Leaves
             </a>
         </div>
     </div>

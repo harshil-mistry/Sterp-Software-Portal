@@ -1,0 +1,163 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex items-center mb-8">
+        <a href="{% url 'employee_leave_dashboard' %}" 
+           class="mr-4 w-10 h-10 bg-slate-800/50 hover:bg-slate-700/50 rounded-xl flex items-center justify-center border border-slate-700/50 transition-all">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+        </a>
+        <div>
+            <h1 class="text-4xl font-bold text-white mb-2">Apply for Leave</h1>
+            <p class="text-gray-400">Submit your leave application request</p>
+        </div>
+    </div>
+
+    <!-- Current Balances Info -->
+    <div class="bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-lg rounded-3xl p-6 border border-blue-500/30">
+        <div class="flex items-start space-x-3">
+            <svg class="w-6 h-6 text-blue-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <div class="flex-1">
+                <h4 class="text-sm font-medium text-blue-400 mb-2">Your Current Leave Balances</h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {% for balance in leave_balances %}
+                    <div class="bg-slate-800/50 rounded-xl p-3 border border-slate-700/50">
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-300 text-sm">{{ balance.leave_type.name }}</span>
+                            <span class="text-white font-bold">{{ balance.remaining_days }}/{{ balance.total_days }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-span-3 text-gray-400 text-sm">No leave balances available</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Form -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Leave Type -->
+            <div>
+                <label for="{{ form.leave_type.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                    Leave Type <span class="text-red-400">*</span>
+                </label>
+                {{ form.leave_type }}
+                {% if form.leave_type.errors %}
+                    <p class="mt-2 text-sm text-red-400">{{ form.leave_type.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Date Range -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        Start Date <span class="text-red-400">*</span>
+                    </label>
+                    {{ form.start_date }}
+                    {% if form.start_date.errors %}
+                        <p class="mt-2 text-sm text-red-400">{{ form.start_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                        End Date <span class="text-red-400">*</span>
+                    </label>
+                    {{ form.end_date }}
+                    {% if form.end_date.errors %}
+                        <p class="mt-2 text-sm text-red-400">{{ form.end_date.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Reason -->
+            <div>
+                <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-300 mb-2">
+                    Reason for Leave <span class="text-red-400">*</span>
+                </label>
+                {{ form.reason }}
+                {% if form.reason.errors %}
+                    <p class="mt-2 text-sm text-red-400">{{ form.reason.errors.0 }}</p>
+                {% endif %}
+                <p class="mt-2 text-sm text-gray-500">Please provide a brief explanation for your leave request</p>
+            </div>
+
+            <!-- Form-level Errors -->
+            {% if form.non_field_errors %}
+                <div class="bg-red-500/20 border border-red-500/30 rounded-xl p-4">
+                    <div class="flex items-start space-x-3">
+                        <svg class="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div class="text-red-400 text-sm">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Submit Buttons -->
+            <div class="flex justify-end space-x-4 pt-6 border-t border-slate-700/50">
+                <a href="{% url 'employee_leave_dashboard' %}" 
+                   class="inline-flex items-center px-6 py-3 bg-slate-700/50 hover:bg-slate-700 text-white font-medium rounded-xl transition-all duration-200">
+                    Cancel
+                </a>
+                <button type="submit"
+                        class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-medium rounded-xl transition-all duration-200 transform hover:scale-105 shadow-lg">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    Submit Application
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Important Notes -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+        <h3 class="text-lg font-semibold text-white mb-4 flex items-center">
+            <svg class="w-5 h-5 mr-2 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+            Important Notes
+        </h3>
+        <ul class="space-y-2 text-sm text-gray-400">
+            <li class="flex items-start">
+                <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                Applications are subject to manager approval
+            </li>
+            <li class="flex items-start">
+                <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                Leave will only be deducted from your balance after approval
+            </li>
+            <li class="flex items-start">
+                <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                You can cancel pending applications before they are reviewed
+            </li>
+            <li class="flex items-start">
+                <svg class="w-4 h-4 mr-2 mt-0.5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+                Please apply for leaves at least 2 days in advance when possible
+            </li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

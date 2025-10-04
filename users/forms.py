@@ -5,7 +5,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 import random
 import string
-from .models import Employee, Project, ProjectCollaborator, Task
+from .models import Employee, Project, ProjectCollaborator, Task, LeaveType, LeaveBalance, LeaveApplication
 
 class EmployeeCreationForm(UserCreationForm):
     password1 = forms.CharField(widget=forms.HiddenInput(), required=False)
@@ -371,3 +371,91 @@ class TaskCompletionForm(forms.ModelForm):
             task.save()
         
         return task
+
+
+class LeaveApplicationForm(forms.ModelForm):
+    """Form for employees to apply for leave"""
+    
+    start_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
+        })
+    )
+    end_date = forms.DateField(
+        widget=forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
+        })
+    )
+    
+    class Meta:
+        model = LeaveApplication
+        fields = ['leave_type', 'start_date', 'end_date', 'reason']
+        widgets = {
+            'leave_type': forms.Select(attrs={
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3'
+            }),
+            'reason': forms.Textarea(attrs={
+                'class': 'block w-full rounded-xl bg-slate-700/50 border-slate-600/50 text-white placeholder-gray-400 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm px-4 py-3',
+                'rows': 4,
+                'placeholder': 'Please provide reason for leave...'
+            })
+        }
+    
+    def __init__(self, *args, **kwargs):
+        self.employee = kwargs.pop('employee', None)
+        super().__init__(*args, **kwargs)
+        
+        # If we have an employee and no instance, create a partial instance
+        # This ensures employee is set before any validation
+        if self.employee and not self.instance.pk:
+            self.instance.employee = self.employee
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        leave_type = cleaned_data.get('leave_type')
+        
+        if start_date and end_date:
+            if end_date < start_date:
+                raise forms.ValidationError("End date cannot be before start date")
+            
+            # Calculate days
+            delta = end_date - start_date
+            total_days = delta.days + 1
+            
+            # Check leave balance
+            if self.employee and leave_type:
+                from datetime import date
+                try:
+                    balance = LeaveBalance.objects.get(
+                        employee=self.employee,
+                        leave_type=leave_type,
+                        year=start_date.year
+                    )
+                    if total_days > balance.remaining_days:
+                        raise forms.ValidationError(
+                            f"Insufficient leave balance. You have {balance.remaining_days} days remaining for {leave_type.name}."
+                        )
+                except LeaveBalance.DoesNotExist:
+                    raise forms.ValidationError("Leave balance not found for this year.")
+        
+        return cleaned_data
+    
+    def save(self, commit=True):
+        # Employee is already set in __init__, so we can just save normally
+        leave_app = super().save(commit=False)
+        
+        # Double-check employee is set (defensive programming)
+        if not leave_app.employee:
+            if self.employee:
+                leave_app.employee = self.employee
+            else:
+                raise ValueError("Employee must be provided to save leave application")
+        
+        if commit:
+            leave_app.save()
+        
+        return leave_app

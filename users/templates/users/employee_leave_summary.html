@@ -1,0 +1,246 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <div class="flex items-center mb-8">
+        <a href="{% url 'employee_detail' employee.pk %}" 
+           class="mr-4 w-10 h-10 bg-slate-800/50 hover:bg-slate-700/50 rounded-xl flex items-center justify-center border border-slate-700/50 transition-all">
+            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+        </a>
+        <div>
+            <h1 class="text-4xl font-bold text-white mb-2">{{ employee.get_full_name }} - Leave Summary</h1>
+            <p class="text-gray-400">Complete leave history and current balances</p>
+        </div>
+    </div>
+
+    <!-- Employee Info Card -->
+    <div class="bg-gradient-to-br from-blue-600/20 to-purple-600/20 backdrop-blur-lg rounded-3xl p-6 border border-blue-500/30">
+        <div class="flex items-center">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+                <span class="text-white font-bold text-2xl">{{ employee.first_name|first|upper }}</span>
+            </div>
+            <div class="flex-1">
+                <h2 class="text-xl font-bold text-white">{{ employee.get_full_name }}</h2>
+                <div class="flex items-center space-x-4 mt-1">
+                    <span class="text-gray-300 text-sm">{{ employee.department }}</span>
+                    <span class="text-gray-400 text-sm">•</span>
+                    <span class="text-gray-300 text-sm">{{ employee.position|default:"Employee" }}</span>
+                    <span class="text-gray-400 text-sm">•</span>
+                    <span class="text-gray-300 text-sm">ID: {{ employee.employee_id }}</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-3 gap-4">
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-yellow-400">{{ pending_applications }}</p>
+                    <p class="text-gray-400 text-xs">Pending</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-green-400">{{ approved_applications }}</p>
+                    <p class="text-gray-400 text-xs">Approved</p>
+                </div>
+                <div class="text-center">
+                    <p class="text-2xl font-bold text-red-400">{{ rejected_applications }}</p>
+                    <p class="text-gray-400 text-xs">Rejected</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Current Year Balances -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+        <div class="flex items-center mb-6">
+            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mr-4">
+                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-white">Leave Balances {{ current_year }}</h2>
+                <p class="text-gray-400 text-sm">Current year leave allocation and usage</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for balance in leave_balances %}
+            <div class="bg-slate-700/30 rounded-2xl p-6 border border-slate-600/30">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-white">{{ balance.leave_type.name }}</h3>
+                    <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-medium 
+                        {% if balance.remaining_days > 5 %}bg-green-500/20 text-green-400 border border-green-500/30
+                        {% elif balance.remaining_days > 2 %}bg-yellow-500/20 text-yellow-400 border border-yellow-500/30
+                        {% else %}bg-red-500/20 text-red-400 border border-red-500/30{% endif %}">
+                        {{ balance.remaining_days }} left
+                    </span>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 text-sm">Total Allocated</span>
+                        <span class="text-white font-bold">{{ balance.total_days }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gray-400 text-sm">Used</span>
+                        <span class="text-orange-400 font-bold">{{ balance.used_days }}</span>
+                    </div>
+                    <div class="flex justify-between items-center pt-3 border-t border-slate-600/50">
+                        <span class="text-gray-300 text-sm font-medium">Remaining</span>
+                        <span class="text-green-400 font-bold text-xl">{{ balance.remaining_days }}</span>
+                    </div>
+                </div>
+
+                <!-- Progress Bar -->
+                <div class="mt-4">
+                    <div class="w-full bg-slate-600/30 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
+                             style="width: {% widthratio balance.used_days balance.total_days 100 %}%"></div>
+                    </div>
+                    <p class="text-gray-500 text-xs mt-1 text-center">
+                        {% widthratio balance.used_days balance.total_days 100 %}% utilized
+                    </p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-3 text-center py-8">
+                <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+                <p class="text-gray-400">No leave balances found for {{ current_year }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-400 text-sm font-medium mb-1">Total Applications</h3>
+            <p class="text-3xl font-bold text-white">{{ total_applications }}</p>
+        </div>
+
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-500/20 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-400 text-sm font-medium mb-1">Approved</h3>
+            <p class="text-3xl font-bold text-green-400">{{ approved_applications }}</p>
+        </div>
+
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-400 text-sm font-medium mb-1">Pending</h3>
+            <p class="text-3xl font-bold text-yellow-400">{{ pending_applications }}</p>
+        </div>
+
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-orange-500/20 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-400 text-sm font-medium mb-1">Days Used ({{ current_year }})</h3>
+            <p class="text-3xl font-bold text-orange-400">{{ approved_this_year }}</p>
+        </div>
+    </div>
+
+    <!-- Leave Application History -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-3xl p-8 border border-slate-700/50">
+        <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+            <svg class="w-6 h-6 mr-3 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Leave Application History
+        </h2>
+
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead>
+                    <tr class="border-b border-slate-700">
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Leave Type</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Duration</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Dates</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Applied On</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Status</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Reviewed By</th>
+                        <th class="text-left py-4 px-4 text-gray-400 font-medium text-sm">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for application in applications %}
+                    <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
+                        <td class="py-4 px-4">
+                            <span class="text-white font-medium">{{ application.leave_type.name }}</span>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span class="text-gray-300">{{ application.total_days }} day{{ application.total_days|pluralize }}</span>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span class="text-gray-300">{{ application.start_date|date:"M d" }} - {{ application.end_date|date:"M d, Y" }}</span>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span class="text-gray-400 text-sm">{{ application.applied_at|date:"M d, Y" }}</span>
+                        </td>
+                        <td class="py-4 px-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-xl text-xs font-medium
+                                {% if application.status == 'APPROVED' %}bg-green-500/20 text-green-400 border border-green-500/30
+                                {% elif application.status == 'REJECTED' %}bg-red-500/20 text-red-400 border border-red-500/30
+                                {% elif application.status == 'PENDING' %}bg-yellow-500/20 text-yellow-400 border border-yellow-500/30
+                                {% else %}bg-gray-500/20 text-gray-400 border border-gray-500/30{% endif %}">
+                                {{ application.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="py-4 px-4">
+                            {% if application.reviewed_by %}
+                            <span class="text-gray-300 text-sm">{{ application.reviewed_by.get_full_name }}</span>
+                            {% else %}
+                            <span class="text-gray-500 text-sm">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-4">
+                            <a href="{% url 'admin_leave_detail' application.pk %}" 
+                               class="inline-flex items-center text-blue-400 hover:text-blue-300 text-sm">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="py-12 text-center">
+                            <svg class="w-16 h-16 text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            <p class="text-gray-400">No leave applications found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

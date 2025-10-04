@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
-from .forms import EmployeeCreationForm, ProjectCreationForm, ProjectUpdateForm, TaskCreationForm, TaskUpdateForm, TaskCompletionForm
-from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCredentials, Task
+from .forms import EmployeeCreationForm, ProjectCreationForm, ProjectUpdateForm, TaskCreationForm, TaskUpdateForm, TaskCompletionForm, LeaveApplicationForm
+from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCredentials, Task, LeaveType, LeaveBalance, LeaveApplication
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
+from django.db.models import Sum
 from datetime import date
 import time
 import logging
@@ -944,3 +945,297 @@ def get_project_employees(request, project_id):
         return JsonResponse({'employees': list(employees)})
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+
+
+# ============================================
+# LEAVE MANAGEMENT VIEWS
+# ============================================
+
+@login_required
+def employee_leave_dashboard(request):
+    """Employee view to see leave balances and application history"""
+    if request.user.is_superuser:
+        messages.info(request, "Admins should use the admin leave management interface.")
+        return redirect('admin_leave_requests')
+    
+    current_year = date.today().year
+    
+    # Get leave balances for current year
+    leave_balances = LeaveBalance.objects.filter(
+        employee=request.user,
+        year=current_year
+    ).select_related('leave_type')
+    
+    # Get recent leave applications (last 10)
+    recent_applications = LeaveApplication.objects.filter(
+        employee=request.user
+    ).select_related('leave_type', 'reviewed_by').order_by('-applied_at')[:10]
+    
+    # Get pending applications count
+    pending_count = LeaveApplication.objects.filter(
+        employee=request.user,
+        status='PENDING'
+    ).count()
+    
+    # Calculate total leaves stats
+    total_leaves = leave_balances.aggregate(
+        total=Sum('total_days'),
+        used=Sum('used_days'),
+        remaining=Sum('remaining_days')
+    )
+    
+    context = {
+        'leave_balances': leave_balances,
+        'recent_applications': recent_applications,
+        'pending_count': pending_count,
+        'total_leaves': total_leaves,
+        'current_year': current_year,
+    }
+    
+    return render(request, 'users/leave_dashboard.html', context)
+
+
+@login_required
+def apply_leave(request):
+    """Employee view to apply for leave"""
+    if request.user.is_superuser:
+        messages.error(request, "Admins cannot apply for leaves.")
+        return redirect('admin_leave_requests')
+    
+    if request.method == 'POST':
+        form = LeaveApplicationForm(request.POST, employee=request.user)
+        if form.is_valid():
+            leave_application = form.save()
+            messages.success(
+                request,
+                f'Leave application submitted successfully! '
+                f'{leave_application.total_days} day(s) of {leave_application.leave_type.name} requested. '
+                f'Status: Pending approval.'
+            )
+            return redirect('employee_leave_dashboard')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = LeaveApplicationForm(employee=request.user)
+    
+    # Get current balances for display
+    current_year = date.today().year
+    leave_balances = LeaveBalance.objects.filter(
+        employee=request.user,
+        year=current_year
+    ).select_related('leave_type')
+    
+    context = {
+        'form': form,
+        'leave_balances': leave_balances,
+    }
+    
+    return render(request, 'users/apply_leave.html', context)
+
+
+@login_required
+def leave_application_detail(request, pk):
+    """Employee view to see their leave application details"""
+    application = get_object_or_404(
+        LeaveApplication,
+        pk=pk,
+        employee=request.user
+    )
+    
+    context = {
+        'application': application,
+    }
+    
+    return render(request, 'users/leave_detail.html', context)
+
+
+@login_required
+def cancel_leave_application(request, pk):
+    """Employee view to cancel a pending leave application"""
+    application = get_object_or_404(
+        LeaveApplication,
+        pk=pk,
+        employee=request.user,
+        status='PENDING'
+    )
+    
+    if request.method == 'POST':
+        application.status = 'CANCELLED'
+        application.save()
+        messages.success(request, f'Leave application for {application.total_days} day(s) cancelled successfully!')
+        return redirect('employee_leave_dashboard')
+    
+    return redirect('leave_application_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_leave_requests(request):
+    """Admin view to see all leave requests with filtering"""
+    applications = LeaveApplication.objects.all().select_related(
+        'employee',
+        'leave_type',
+        'reviewed_by'
+    ).order_by('-applied_at')
+    
+    # Filter by status
+    status = request.GET.get('status')
+    if status:
+        applications = applications.filter(status=status)
+    else:
+        # Default to showing pending applications first
+        applications = applications.order_by(
+            '-status',  # PENDING comes before others
+            '-applied_at'
+        )
+    
+    # Filter by employee
+    employee_id = request.GET.get('employee')
+    if employee_id:
+        applications = applications.filter(employee_id=employee_id)
+    
+    # Filter by leave type
+    leave_type_id = request.GET.get('leave_type')
+    if leave_type_id:
+        applications = applications.filter(leave_type_id=leave_type_id)
+    
+    # Get employees and leave types for filters
+    employees = Employee.objects.filter(is_superuser=False).order_by('first_name', 'last_name')
+    leave_types = LeaveType.objects.all()
+    
+    # Get statistics
+    pending_count = LeaveApplication.objects.filter(status='PENDING').count()
+    approved_count = LeaveApplication.objects.filter(status='APPROVED').count()
+    rejected_count = LeaveApplication.objects.filter(status='REJECTED').count()
+    
+    context = {
+        'applications': applications,
+        'employees': employees,
+        'leave_types': leave_types,
+        'pending_count': pending_count,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'selected_status': status,
+        'selected_employee': employee_id,
+        'selected_leave_type': leave_type_id,
+    }
+    
+    return render(request, 'users/admin_leave_requests.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_leave_detail(request, pk):
+    """Admin view to see leave application details"""
+    application = get_object_or_404(LeaveApplication, pk=pk)
+    
+    # Get employee's leave balance for the application year
+    leave_balance = LeaveBalance.objects.filter(
+        employee=application.employee,
+        leave_type=application.leave_type,
+        year=application.start_date.year
+    ).first()
+    
+    context = {
+        'application': application,
+        'leave_balance': leave_balance,
+    }
+    
+    return render(request, 'users/admin_leave_detail.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def approve_leave(request, pk):
+    """Admin action to approve a leave application"""
+    application = get_object_or_404(LeaveApplication, pk=pk, status='PENDING')
+    
+    if request.method == 'POST':
+        remarks = request.POST.get('admin_remarks', '')
+        
+        try:
+            # Use the model's approve method which handles balance deduction
+            application.approve(admin=request.user, remarks=remarks)
+            
+            messages.success(
+                request,
+                f'Leave application approved! {application.total_days} day(s) of '
+                f'{application.leave_type.name} deducted from {application.employee.get_full_name()}\'s balance.'
+            )
+        except ValueError as e:
+            messages.error(request, str(e))
+            return redirect('admin_leave_detail', pk=pk)
+        
+        return redirect('admin_leave_requests')
+    
+    return redirect('admin_leave_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(is_admin)
+def reject_leave(request, pk):
+    """Admin action to reject a leave application"""
+    application = get_object_or_404(LeaveApplication, pk=pk, status='PENDING')
+    
+    if request.method == 'POST':
+        remarks = request.POST.get('admin_remarks', '')
+        
+        if not remarks:
+            messages.error(request, 'Please provide a reason for rejection.')
+            return redirect('admin_leave_detail', pk=pk)
+        
+        # Use the model's reject method
+        application.reject(admin=request.user, remarks=remarks)
+        
+        messages.success(
+            request,
+            f'Leave application rejected. {application.employee.get_full_name()} has been notified.'
+        )
+        return redirect('admin_leave_requests')
+    
+    return redirect('admin_leave_detail', pk=pk)
+
+
+@login_required
+@user_passes_test(is_admin)
+def employee_leave_summary(request, employee_id):
+    """Admin view to see an employee's complete leave summary"""
+    employee = get_object_or_404(Employee, pk=employee_id)
+    current_year = date.today().year
+    
+    # Get leave balances for current year
+    leave_balances = LeaveBalance.objects.filter(
+        employee=employee,
+        year=current_year
+    ).select_related('leave_type')
+    
+    # Get all leave applications for the employee
+    applications = LeaveApplication.objects.filter(
+        employee=employee
+    ).select_related('leave_type', 'reviewed_by').order_by('-applied_at')
+    
+    # Get statistics
+    total_applications = applications.count()
+    pending_applications = applications.filter(status='PENDING').count()
+    approved_applications = applications.filter(status='APPROVED').count()
+    rejected_applications = applications.filter(status='REJECTED').count()
+    
+    # Calculate total leaves used this year
+    approved_this_year = applications.filter(
+        status='APPROVED',
+        start_date__year=current_year
+    ).aggregate(total=Sum('total_days'))['total'] or 0
+    
+    context = {
+        'employee': employee,
+        'leave_balances': leave_balances,
+        'applications': applications,
+        'current_year': current_year,
+        'total_applications': total_applications,
+        'pending_applications': pending_applications,
+        'approved_applications': approved_applications,
+        'rejected_applications': rejected_applications,
+        'approved_this_year': approved_this_year,
+    }
+    
+    return render(request, 'users/employee_leave_summary.html', context)

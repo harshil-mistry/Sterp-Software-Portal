@@ -35,4 +35,15 @@ urlpatterns = [
     path('my-tasks/<int:pk>/complete/', views.mark_task_completed, name='mark_task_completed'),
     # AJAX endpoint for getting project employees
     path('api/project/<str:project_id>/employees/', views.get_project_employees, name='get_project_employees'),
+    # Leave Management URLs - Employee
+    path('leaves/', views.employee_leave_dashboard, name='employee_leave_dashboard'),
+    path('leaves/apply/', views.apply_leave, name='apply_leave'),
+    path('leaves/<int:pk>/', views.leave_application_detail, name='leave_application_detail'),
+    path('leaves/<int:pk>/cancel/', views.cancel_leave_application, name='cancel_leave_application'),
+    # Leave Management URLs - Admin
+    path('admin-leaves/', views.admin_leave_requests, name='admin_leave_requests'),
+    path('admin-leaves/<int:pk>/', views.admin_leave_detail, name='admin_leave_detail'),
+    path('admin-leaves/<int:pk>/approve/', views.approve_leave, name='approve_leave'),
+    path('admin-leaves/<int:pk>/reject/', views.reject_leave, name='reject_leave'),
+    path('admin-employee/<int:employee_id>/leaves/', views.employee_leave_summary, name='employee_leave_summary'),
 ]
