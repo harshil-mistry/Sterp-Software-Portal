@@ -46,4 +46,13 @@ urlpatterns = [
     path('admin-leaves/<int:pk>/approve/', views.approve_leave, name='approve_leave'),
     path('admin-leaves/<int:pk>/reject/', views.reject_leave, name='reject_leave'),
     path('admin-employee/<int:employee_id>/leaves/', views.employee_leave_summary, name='employee_leave_summary'),
+    # Attendance Management URLs - Employee
+    path('attendance/', views.employee_attendance_dashboard, name='employee_attendance_dashboard'),
+    path('attendance/mark/', views.mark_attendance, name='mark_attendance'),
+    path('attendance/checkout/', views.checkout_attendance, name='checkout_attendance'),
+    path('attendance/history/', views.attendance_history, name='attendance_history'),
+    # Attendance Management URLs - Admin
+    path('admin/attendance/today/', views.admin_attendance_today, name='admin_attendance_today'),
+    path('admin/attendance/employee/<int:employee_id>/', views.admin_employee_attendance, name='admin_employee_attendance'),
+    path('admin/attendance/mark/<int:employee_id>/', views.admin_mark_attendance, name='admin_mark_attendance'),
 ]

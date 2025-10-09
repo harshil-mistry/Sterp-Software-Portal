@@ -2,14 +2,15 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib import messages
 from .forms import EmployeeCreationForm, ProjectCreationForm, ProjectUpdateForm, TaskCreationForm, TaskUpdateForm, TaskCompletionForm, LeaveApplicationForm
-from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCredentials, Task, LeaveType, LeaveBalance, LeaveApplication
+from .models import Employee, Project, ProjectCollaborator, GoogleCalendarCredentials, Task, LeaveType, LeaveBalance, LeaveApplication, Attendance
 from django.contrib.auth.views import LoginView, PasswordChangeView
 from django.urls import reverse_lazy
 from django.contrib.auth import update_session_auth_hash
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.db.models import Sum
-from datetime import date
+from django.utils import timezone
+from datetime import date, datetime
 import time
 import logging
 
@@ -1253,3 +1254,348 @@ def employee_leave_summary(request, employee_id):
     }
     
     return render(request, 'users/employee_leave_summary.html', context)
+
+
+# ============================================
+# ATTENDANCE MANAGEMENT VIEWS
+# ============================================
+
+@login_required
+def employee_attendance_dashboard(request):
+    """Employee view to see attendance status and mark attendance"""
+    if request.user.is_superuser:
+        messages.info(request, "Admins should use the admin attendance interface.")
+        return redirect('admin_attendance_today')
+    
+    today = date.today()
+    
+    # Get or create today's attendance record
+    attendance_today, created = Attendance.objects.get_or_create(
+        employee=request.user,
+        date=today,
+        defaults={'status': 'ABSENT'}
+    )
+    
+    # Get this month's attendance records
+    from datetime import datetime
+    current_month = today.month
+    current_year = today.year
+    
+    monthly_records = Attendance.objects.filter(
+        employee=request.user,
+        date__month=current_month,
+        date__year=current_year
+    ).order_by('-date')
+    
+    # Calculate statistics
+    total_days = monthly_records.count()
+    present_days = monthly_records.filter(status__in=['PRESENT', 'LATE']).count()
+    absent_days = monthly_records.filter(status='ABSENT').count()
+    late_days = monthly_records.filter(status='LATE').count()
+    on_leave_days = monthly_records.filter(status='ON_LEAVE').count()
+    
+    attendance_rate = (present_days / total_days * 100) if total_days > 0 else 0
+    
+    context = {
+        'attendance_today': attendance_today,
+        'monthly_records': monthly_records,
+        'total_days': total_days,
+        'present_days': present_days,
+        'absent_days': absent_days,
+        'late_days': late_days,
+        'on_leave_days': on_leave_days,
+        'attendance_rate': round(attendance_rate, 1),
+        'today': today,
+    }
+    
+    return render(request, 'users/attendance_dashboard.html', context)
+
+
+@login_required
+def mark_attendance(request):
+    """Employee action to mark attendance (check-in)"""
+    if request.method == 'POST':
+        today = date.today()
+        
+        # Check if already marked
+        attendance = Attendance.objects.filter(
+            employee=request.user,
+            date=today
+        ).first()
+        
+        if attendance and attendance.check_in_time:
+            messages.warning(request, 'You have already marked attendance today!')
+            return redirect('employee_attendance_dashboard')
+        
+        # Mark attendance
+        if attendance:
+            attendance.check_in_time = timezone.now()
+            attendance.save()
+        else:
+            attendance = Attendance.objects.create(
+                employee=request.user,
+                date=today,
+                check_in_time=timezone.now()
+            )
+        
+        status_message = {
+            'PRESENT': 'Attendance marked successfully! You are on time. ✓',
+            'LATE': 'Attendance marked. You arrived late today. ⚠️',
+        }.get(attendance.status, 'Attendance marked!')
+        
+        messages.success(request, status_message)
+        return redirect('employee_attendance_dashboard')
+    
+    return redirect('employee_attendance_dashboard')
+
+
+@login_required
+def checkout_attendance(request):
+    """Employee action to checkout (end of day)"""
+    if request.method == 'POST':
+        today = date.today()
+        
+        attendance = Attendance.objects.filter(
+            employee=request.user,
+            date=today
+        ).first()
+        
+        if not attendance or not attendance.check_in_time:
+            messages.error(request, 'Please mark attendance first before checking out.')
+            return redirect('employee_attendance_dashboard')
+        
+        if attendance.check_out_time:
+            messages.warning(request, 'You have already checked out today!')
+            return redirect('employee_attendance_dashboard')
+        
+        # Mark checkout
+        attendance.check_out_time = timezone.now()
+        attendance.save()
+        
+        messages.success(
+            request,
+            f'Checked out successfully! Total work hours: {attendance.work_hours} hours. 👋'
+        )
+        return redirect('employee_attendance_dashboard')
+    
+    return redirect('employee_attendance_dashboard')
+
+
+@login_required
+def attendance_history(request):
+    """Employee view to see their attendance history"""
+    if request.user.is_superuser:
+        return redirect('admin_attendance_today')
+    
+    # Get filter parameters
+    month = request.GET.get('month', date.today().month)
+    year = request.GET.get('year', date.today().year)
+    
+    try:
+        month = int(month)
+        year = int(year)
+    except (ValueError, TypeError):
+        month = date.today().month
+        year = date.today().year
+    
+    # Get attendance records for the selected month
+    records = Attendance.objects.filter(
+        employee=request.user,
+        date__month=month,
+        date__year=year
+    ).order_by('-date')
+    
+    # Calculate statistics
+    total_days = records.count()
+    present_days = records.filter(status__in=['PRESENT', 'LATE']).count()
+    absent_days = records.filter(status='ABSENT').count()
+    late_days = records.filter(status='LATE').count()
+    half_days = records.filter(status='HALF_DAY').count()
+    on_leave_days = records.filter(status='ON_LEAVE').count()
+    
+    total_work_hours = records.aggregate(total=Sum('work_hours'))['total'] or 0
+    avg_work_hours = (total_work_hours / present_days) if present_days > 0 else 0
+    
+    context = {
+        'records': records,
+        'selected_month': month,
+        'selected_year': year,
+        'total_days': total_days,
+        'present_days': present_days,
+        'absent_days': absent_days,
+        'late_days': late_days,
+        'half_days': half_days,
+        'on_leave_days': on_leave_days,
+        'total_work_hours': round(total_work_hours, 2),
+        'avg_work_hours': round(avg_work_hours, 2),
+    }
+    
+    return render(request, 'users/attendance_history.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_attendance_today(request):
+    """Admin view to see today's attendance for all employees"""
+    today = date.today()
+    
+    # Get all non-admin employees
+    employees = Employee.objects.filter(is_superuser=False)
+    
+    # Get today's attendance records
+    attendance_records = Attendance.objects.filter(date=today).select_related('employee')
+    attendance_dict = {att.employee_id: att for att in attendance_records}
+    
+    # Build list with attendance status for each employee
+    employee_attendance = []
+    for employee in employees:
+        att = attendance_dict.get(employee.id)
+        if not att:
+            # Create absent record for employees who haven't marked
+            att = Attendance.objects.create(
+                employee=employee,
+                date=today,
+                status='ABSENT'
+            )
+        
+        employee_attendance.append({
+            'employee': employee,
+            'attendance': att,
+        })
+    
+    # Calculate statistics
+    total_employees = len(employee_attendance)
+    checked_in = sum(1 for item in employee_attendance if item['attendance'].check_in_time)
+    not_checked_in = total_employees - checked_in
+    late_arrivals = sum(1 for item in employee_attendance if item['attendance'].status == 'LATE')
+    on_leave = sum(1 for item in employee_attendance if item['attendance'].status == 'ON_LEAVE')
+    
+    # Sort: checked in first, then by status
+    employee_attendance.sort(key=lambda x: (not x['attendance'].check_in_time, x['attendance'].status))
+    
+    context = {
+        'employee_attendance': employee_attendance,
+        'today': today,
+        'total_employees': total_employees,
+        'checked_in': checked_in,
+        'not_checked_in': not_checked_in,
+        'late_arrivals': late_arrivals,
+        'on_leave': on_leave,
+        'attendance_rate': round((checked_in / total_employees * 100), 1) if total_employees > 0 else 0,
+    }
+    
+    return render(request, 'users/admin_attendance_today.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_employee_attendance(request, employee_id):
+    """Admin view to see detailed attendance for a specific employee"""
+    employee = get_object_or_404(Employee, pk=employee_id)
+    
+    # Get filter parameters
+    month = request.GET.get('month', date.today().month)
+    year = request.GET.get('year', date.today().year)
+    
+    try:
+        month = int(month)
+        year = int(year)
+    except (ValueError, TypeError):
+        month = date.today().month
+        year = date.today().year
+    
+    # Get attendance records
+    records = Attendance.objects.filter(
+        employee=employee,
+        date__month=month,
+        date__year=year
+    ).order_by('-date')
+    
+    # Calculate statistics
+    total_days = records.count()
+    present_days = records.filter(status__in=['PRESENT', 'LATE']).count()
+    absent_days = records.filter(status='ABSENT').count()
+    late_days = records.filter(status='LATE').count()
+    half_days = records.filter(status='HALF_DAY').count()
+    on_leave_days = records.filter(status='ON_LEAVE').count()
+    
+    total_work_hours = records.aggregate(total=Sum('work_hours'))['total'] or 0
+    avg_work_hours = (total_work_hours / present_days) if present_days > 0 else 0
+    attendance_rate = (present_days / total_days * 100) if total_days > 0 else 0
+    
+    context = {
+        'employee': employee,
+        'records': records,
+        'selected_month': month,
+        'selected_year': year,
+        'total_days': total_days,
+        'present_days': present_days,
+        'absent_days': absent_days,
+        'late_days': late_days,
+        'half_days': half_days,
+        'on_leave_days': on_leave_days,
+        'total_work_hours': round(total_work_hours, 2),
+        'avg_work_hours': round(avg_work_hours, 2),
+        'attendance_rate': round(attendance_rate, 1),
+    }
+    
+    return render(request, 'users/admin_employee_attendance.html', context)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_mark_attendance(request, employee_id):
+    """Admin action to manually mark attendance for an employee"""
+    if request.method == 'POST':
+        employee = get_object_or_404(Employee, pk=employee_id)
+        attendance_date = request.POST.get('date', date.today())
+        
+        try:
+            if isinstance(attendance_date, str):
+                attendance_date = datetime.strptime(attendance_date, '%Y-%m-%d').date()
+        except ValueError:
+            attendance_date = date.today()
+        
+        # Get or create attendance record
+        attendance, created = Attendance.objects.get_or_create(
+            employee=employee,
+            date=attendance_date
+        )
+        
+        # Update fields
+        check_in_str = request.POST.get('check_in_time')
+        check_out_str = request.POST.get('check_out_time')
+        notes = request.POST.get('notes', '')
+        
+        if check_in_str:
+            try:
+                check_in_datetime = datetime.strptime(
+                    f"{attendance_date} {check_in_str}",
+                    '%Y-%m-%d %H:%M'
+                )
+                attendance.check_in_time = timezone.make_aware(check_in_datetime)
+            except ValueError:
+                pass
+        
+        if check_out_str:
+            try:
+                check_out_datetime = datetime.strptime(
+                    f"{attendance_date} {check_out_str}",
+                    '%Y-%m-%d %H:%M'
+                )
+                attendance.check_out_time = timezone.make_aware(check_out_datetime)
+            except ValueError:
+                pass
+        
+        attendance.notes = notes
+        attendance.marked_by_admin = True
+        attendance.save()
+        
+        messages.success(
+            request,
+            f'Attendance marked for {employee.get_full_name()} on {attendance_date}.'
+        )
+        
+        return redirect('admin_attendance_today')
+    
+    return redirect('admin_attendance_today')

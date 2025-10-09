@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Employee, GoogleCalendarCredentials, LeaveType, LeaveBalance, LeaveApplication
+from .models import Employee, GoogleCalendarCredentials, LeaveType, LeaveBalance, LeaveApplication, Attendance
 from django.contrib.auth.models import User
 
 # Register your models here.
@@ -49,6 +49,30 @@ class LeaveApplicationAdmin(admin.ModelAdmin):
         }),
         ('Timestamps', {
             'fields': ('applied_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'date', 'check_in_time', 'check_out_time', 'work_hours', 'status', 'marked_by_admin')
+    list_filter = ('status', 'date', 'marked_by_admin')
+    search_fields = ('employee__first_name', 'employee__last_name', 'employee__employee_id')
+    readonly_fields = ('created_at', 'updated_at', 'work_hours')
+    date_hierarchy = 'date'
+    fieldsets = (
+        ('Employee & Date', {
+            'fields': ('employee', 'date')
+        }),
+        ('Check In/Out Times', {
+            'fields': ('check_in_time', 'check_out_time', 'work_hours')
+        }),
+        ('Status & Notes', {
+            'fields': ('status', 'notes', 'marked_by_admin')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)
         }),
     )

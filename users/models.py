@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from datetime import datetime, time
 import random
 import string
 
@@ -401,3 +403,110 @@ class LeaveApplication(models.Model):
         self.reviewed_at = timezone.now()
         self.admin_remarks = remarks
         self.save()
+
+
+class Attendance(models.Model):
+    """Daily attendance tracking for employees"""
+    STATUS_CHOICES = [
+        ('PRESENT', 'Present'),
+        ('ABSENT', 'Absent'),
+        ('LATE', 'Late'),
+        ('HALF_DAY', 'Half Day'),
+        ('ON_LEAVE', 'On Leave'),
+    ]
+    
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_records')
+    date = models.DateField(help_text="Attendance date")
+    check_in_time = models.DateTimeField(null=True, blank=True, help_text="When employee checked in")
+    check_out_time = models.DateTimeField(null=True, blank=True, help_text="When employee checked out")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ABSENT')
+    work_hours = models.DecimalField(max_digits=4, decimal_places=2, default=0, help_text="Total work hours")
+    notes = models.TextField(blank=True, help_text="Additional notes")
+    marked_by_admin = models.BooleanField(default=False, help_text="Whether admin manually marked attendance")
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-date']
+        unique_together = ['employee', 'date']  # One record per employee per day
+        indexes = [
+            models.Index(fields=['employee', 'date']),
+            models.Index(fields=['date', 'status']),
+        ]
+        verbose_name_plural = 'Attendance Records'
+    
+    def __str__(self):
+        return f"{self.employee.get_full_name()} - {self.date} ({self.get_status_display()})"
+    
+    def calculate_work_hours(self):
+        """Calculate work hours based on check-in and check-out times"""
+        if self.check_in_time and self.check_out_time:
+            delta = self.check_out_time - self.check_in_time
+            hours = delta.total_seconds() / 3600  # Convert seconds to hours
+            self.work_hours = round(hours, 2)
+        return self.work_hours
+    
+    def determine_status(self):
+        """Automatically determine attendance status based on check-in time and work hours"""
+        if not self.check_in_time:
+            # Check if employee is on approved leave
+            leave_exists = LeaveApplication.objects.filter(
+                employee=self.employee,
+                start_date__lte=self.date,
+                end_date__gte=self.date,
+                status='APPROVED'
+            ).exists()
+            
+            if leave_exists:
+                self.status = 'ON_LEAVE'
+            else:
+                self.status = 'ABSENT'
+        else:
+            # Check if late (after 9:15 AM)
+            check_in_time_only = self.check_in_time.time()
+            late_threshold = time(9, 15)  # 9:15 AM
+            
+            if check_in_time_only > late_threshold:
+                self.status = 'LATE'
+            else:
+                self.status = 'PRESENT'
+            
+            # Check for half day if checked out
+            if self.check_out_time:
+                self.calculate_work_hours()
+                if self.work_hours < 4.0:
+                    self.status = 'HALF_DAY'
+        
+        return self.status
+    
+    def save(self, *args, **kwargs):
+        """Override save to automatically determine status"""
+        self.determine_status()
+        if self.check_in_time and self.check_out_time:
+            self.calculate_work_hours()
+        super().save(*args, **kwargs)
+    
+    def is_checked_in(self):
+        """Check if employee is currently checked in"""
+        return self.check_in_time is not None and self.check_out_time is None
+    
+    def is_checked_out(self):
+        """Check if employee has checked out"""
+        return self.check_out_time is not None
+    
+    def get_duration_display(self):
+        """Get human-readable duration of work"""
+        if not self.check_in_time:
+            return "Not checked in"
+        
+        if self.check_out_time:
+            return f"{self.work_hours} hours"
+        
+        # Calculate current duration
+        from django.utils import timezone
+        delta = timezone.now() - self.check_in_time
+        hours = int(delta.total_seconds() // 3600)
+        minutes = int((delta.total_seconds() % 3600) // 60)
+        return f"{hours}h {minutes}m"
