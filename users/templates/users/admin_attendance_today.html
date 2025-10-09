@@ -1,0 +1,275 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header with Auto-refresh -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-white mb-2">Today's Attendance Board</h1>
+            <p class="text-gray-400">{{ today|date:"l, F d, Y" }} • Last updated: <span id="last-updated">just now</span></p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="location.reload()" 
+                    class="inline-flex items-center px-6 py-3 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-medium rounded-xl transition-all duration-200 border border-blue-500/30">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                </svg>
+                Refresh
+            </button>
+            <a href="{% url 'admin_dashboard' %}" 
+               class="inline-flex items-center px-6 py-3 bg-slate-700/50 hover:bg-slate-700 text-white font-medium rounded-xl transition-all duration-200">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-gray-400 text-sm">Total Employees</span>
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-white">{{ total_employees }}</p>
+        </div>
+        
+        <div class="bg-green-500/10 backdrop-blur-lg rounded-2xl p-6 border border-green-500/30">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-gray-400 text-sm">Present</span>
+                <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-green-400">{{ present_count }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ present_percentage }}%</p>
+        </div>
+        
+        <div class="bg-red-500/10 backdrop-blur-lg rounded-2xl p-6 border border-red-500/30">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-gray-400 text-sm">Absent</span>
+                <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-red-400">{{ absent_count }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ absent_percentage }}%</p>
+        </div>
+        
+        <div class="bg-yellow-500/10 backdrop-blur-lg rounded-2xl p-6 border border-yellow-500/30">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-gray-400 text-sm">Late Arrivals</span>
+                <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-yellow-400">{{ late_count }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ late_percentage }}%</p>
+        </div>
+        
+        <div class="bg-blue-500/10 backdrop-blur-lg rounded-2xl p-6 border border-blue-500/30">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-gray-400 text-sm">On Leave</span>
+                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                </svg>
+            </div>
+            <p class="text-3xl font-bold text-blue-400">{{ on_leave_count }}</p>
+            <p class="text-xs text-gray-400 mt-1">{{ on_leave_percentage }}%</p>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="bg-slate-800/50 backdrop-blur-lg rounded-2xl p-2 border border-slate-700/50 inline-flex gap-2">
+        <button onclick="filterStatus('all')" 
+                class="filter-btn px-6 py-2 bg-blue-600 text-white font-medium rounded-xl transition-all duration-200">
+            All ({{ total_employees }})
+        </button>
+        <button onclick="filterStatus('PRESENT')" 
+                class="filter-btn px-6 py-2 bg-slate-700/50 hover:bg-slate-700 text-white font-medium rounded-xl transition-all duration-200">
+            Present ({{ present_count }})
+        </button>
+        <button onclick="filterStatus('LATE')" 
+                class="filter-btn px-6 py-2 bg-slate-700/50 hover:bg-slate-700 text-white font-medium rounded-xl transition-all duration-200">
+            Late ({{ late_count }})
+        </button>
+        <button onclick="filterStatus('ABSENT')" 
+                class="filter-btn px-6 py-2 bg-slate-700/50 hover:bg-slate-700 text-white font-medium rounded-xl transition-all duration-200">
+            Absent ({{ absent_count }})
+        </button>
+        <button onclick="filterStatus('ON_LEAVE')" 
+                class="filter-btn px-6 py-2 bg-slate-700/50 hover:bg-slate-700 text-white font-medium rounded-xl transition-all duration-200">
+            On Leave ({{ on_leave_count }})
+        </button>
+    </div>
+
+    <!-- Attendance Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="attendance-grid">
+        {% for record in attendance_records %}
+        <div class="attendance-card bg-slate-800/50 backdrop-blur-lg rounded-2xl p-6 border border-slate-700/50 hover:border-slate-600 transition-all duration-200" 
+             data-status="{{ record.status }}">
+            <!-- Employee Header -->
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center mr-3">
+                        <span class="text-white font-bold text-lg">{{ record.employee.first_name.0 }}{{ record.employee.last_name.0 }}</span>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold">{{ record.employee.get_full_name }}</h3>
+                        <p class="text-gray-400 text-sm">{{ record.employee.employee_id }}</p>
+                        {% if record.employee.department %}
+                            <p class="text-gray-500 text-xs">{{ record.employee.department }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Status Badge -->
+                {% if record.status == 'PRESENT' %}
+                    <span class="inline-flex items-center px-3 py-1 bg-green-500/20 text-green-400 rounded-lg text-xs font-medium border border-green-500/30">
+                        ✓ Present
+                    </span>
+                {% elif record.status == 'LATE' %}
+                    <span class="inline-flex items-center px-3 py-1 bg-yellow-500/20 text-yellow-400 rounded-lg text-xs font-medium border border-yellow-500/30">
+                        ⚠ Late
+                    </span>
+                {% elif record.status == 'ABSENT' %}
+                    <span class="inline-flex items-center px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-xs font-medium border border-red-500/30">
+                        ✗ Absent
+                    </span>
+                {% elif record.status == 'ON_LEAVE' %}
+                    <span class="inline-flex items-center px-3 py-1 bg-blue-500/20 text-blue-400 rounded-lg text-xs font-medium border border-blue-500/30">
+                        🏖 Leave
+                    </span>
+                {% elif record.status == 'HALF_DAY' %}
+                    <span class="inline-flex items-center px-3 py-1 bg-orange-500/20 text-orange-400 rounded-lg text-xs font-medium border border-orange-500/30">
+                        ½ Half Day
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Attendance Details -->
+            <div class="space-y-3">
+                {% if record.check_in_time %}
+                    <div class="flex items-center justify-between py-2 border-t border-slate-700/50">
+                        <span class="text-gray-400 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
+                            </svg>
+                            Check In
+                        </span>
+                        <span class="text-white font-medium">{{ record.check_in_time|date:"h:i A" }}</span>
+                    </div>
+                {% endif %}
+
+                {% if record.check_out_time %}
+                    <div class="flex items-center justify-between py-2 border-t border-slate-700/50">
+                        <span class="text-gray-400 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            Check Out
+                        </span>
+                        <span class="text-white font-medium">{{ record.check_out_time|date:"h:i A" }}</span>
+                    </div>
+                {% elif record.check_in_time %}
+                    <div class="flex items-center justify-between py-2 border-t border-slate-700/50">
+                        <span class="text-gray-400 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Duration
+                        </span>
+                        <span class="text-yellow-400 font-medium text-sm">{{ record.get_duration_display }}</span>
+                    </div>
+                {% endif %}
+
+                {% if record.work_hours > 0 %}
+                    <div class="flex items-center justify-between py-2 border-t border-slate-700/50">
+                        <span class="text-gray-400 text-sm flex items-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                            Work Hours
+                        </span>
+                        <span class="text-purple-400 font-bold">{{ record.work_hours }} hrs</span>
+                    </div>
+                {% endif %}
+
+                {% if record.notes %}
+                    <div class="py-2 border-t border-slate-700/50">
+                        <span class="text-gray-400 text-xs block mb-1">Notes:</span>
+                        <span class="text-gray-300 text-sm">{{ record.notes|truncatewords:10 }}</span>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 mt-4 pt-4 border-t border-slate-700/50">
+                <a href="{% url 'admin_employee_attendance' record.employee.id %}" 
+                   class="flex-1 px-4 py-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 font-medium rounded-lg text-center text-sm transition-all duration-200 border border-blue-500/30">
+                    View Details
+                </a>
+                <a href="{% url 'admin_mark_attendance' record.employee.id %}" 
+                   class="flex-1 px-4 py-2 bg-slate-700/50 hover:bg-slate-700 text-white font-medium rounded-lg text-center text-sm transition-all duration-200">
+                    Edit
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full text-center py-12">
+            <svg class="w-20 h-20 mx-auto text-gray-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+            </svg>
+            <h3 class="text-xl font-bold text-white mb-2">No Employees Found</h3>
+            <p class="text-gray-400">There are no employees in the system yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// Auto-refresh every 2 minutes
+let lastUpdate = new Date();
+setInterval(() => {
+    location.reload();
+}, 120000);
+
+// Update "last updated" time
+setInterval(() => {
+    const elapsed = Math.floor((new Date() - lastUpdate) / 1000);
+    let text = 'just now';
+    if (elapsed >= 60) {
+        const minutes = Math.floor(elapsed / 60);
+        text = `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    }
+    document.getElementById('last-updated').textContent = text;
+}, 10000);
+
+// Filter functionality
+function filterStatus(status) {
+    const cards = document.querySelectorAll('.attendance-card');
+    const buttons = document.querySelectorAll('.filter-btn');
+    
+    // Update button styles
+    buttons.forEach(btn => {
+        btn.classList.remove('bg-blue-600');
+        btn.classList.add('bg-slate-700/50', 'hover:bg-slate-700');
+    });
+    event.target.classList.remove('bg-slate-700/50', 'hover:bg-slate-700');
+    event.target.classList.add('bg-blue-600');
+    
+    // Filter cards
+    cards.forEach(card => {
+        if (status === 'all' || card.dataset.status === status) {
+            card.style.display = 'block';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

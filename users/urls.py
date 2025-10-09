@@ -52,7 +52,7 @@ urlpatterns = [
     path('attendance/checkout/', views.checkout_attendance, name='checkout_attendance'),
     path('attendance/history/', views.attendance_history, name='attendance_history'),
     # Attendance Management URLs - Admin
-    path('admin/attendance/today/', views.admin_attendance_today, name='admin_attendance_today'),
-    path('admin/attendance/employee/<int:employee_id>/', views.admin_employee_attendance, name='admin_employee_attendance'),
-    path('admin/attendance/mark/<int:employee_id>/', views.admin_mark_attendance, name='admin_mark_attendance'),
+    path('admin-attendance/today/', views.admin_attendance_today, name='admin_attendance_today'),
+    path('admin-attendance/employee/<int:employee_id>/', views.admin_employee_attendance, name='admin_employee_attendance'),
+    path('admin-attendance/mark/<int:employee_id>/', views.admin_mark_attendance, name='admin_mark_attendance'),
 ]
