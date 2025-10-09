@@ -1,0 +1,65 @@
+STERP SOFTWARE PORTAL - SYSTEM OVERVIEW
+
+WHAT IS THIS SYSTEM
+The STERP Software Portal is an employee management system for STERP Softwares company. It is a digital workspace where administrators manage employees, projects, tasks, and leave requests.
+
+WHO USES THIS SYSTEM
+There are two types of users: Admin Users who are managers or HR personnel with full system access, and Employee Users who are regular staff with limited access to their own information.
+
+Admin users can create employee accounts, assign projects and tasks, approve or reject leave requests, and view all reports and statistics. Employee users can view their profile, see assigned projects, track tasks, apply for leaves, and connect their Google Calendar.
+
+MAIN FEATURES
+
+FEATURE 1: EMPLOYEE MANAGEMENT
+Administrators manage all employee information centrally. When an admin creates a new employee account, the system automatically generates an Employee ID like EMP001, creates a random password, and sends a welcome email with login credentials. The system stores basic details like name, email, phone, address, and date of birth, along with work details such as department, position, and monthly salary. The username is the same as the Employee ID.
+
+FEATURE 2: PROJECT MANAGEMENT
+Projects are organized with teams of people. Admins create projects with a name, description, start and end dates, priority level, and status. Team members called collaborators are selected for each project. The system automatically tracks project progress. When a project is created, all team members can see it. If team members have Google Calendar connected, project start dates and deadlines are automatically added to their calendars with reminders. The system calculates completion percentages and monitors overdue items.
+
+FEATURE 3: TASK MANAGEMENT
+Work is broken down into specific tasks assigned to employees. Admins create tasks with a name, description, assigned employee, due date, priority level, and can optionally link the task to a project. Employees see tasks in their dashboard and can mark them as in progress or completed. Tasks have three statuses: PENDING when first assigned, IN_PROGRESS when being worked on, and COMPLETED when finished. If a task is linked to a project, only team members of that project can be assigned. Tasks are automatically added to employee calendars if connected, and the system tracks overdue tasks. Employees can add completion notes and actual hours worked.
+
+FEATURE 4: LEAVE MANAGEMENT
+Employees request time off and admins approve or reject requests while the system tracks balances automatically. Each employee gets a yearly quota for different leave types showing total days, used days, and remaining days. When applying for leave, employees select a leave type, choose start and end dates, and write a reason. The system calculates total days and checks if enough balance is available. Applications start with PENDING status.
+
+Admins review leave requests and can filter by status, employee, or leave type. When a leave is approved, the balance is automatically deducted and if the employee has Google Calendar connected, all-day events are created for each day of leave showing the leave type and reason. When rejected, the balance is not deducted and the status changes to REJECTED.
+
+Leave types include Annual Leave with 20 days per year, Sick Leave with 10 days, Casual Leave with 7 days, Maternity Leave with 180 days, and Paternity Leave with 7 days. When a new employee is created, leave balances for all types are automatically set up. The system validates that employees cannot apply for more leave than available and automatically calculates total days between dates.
+
+FEATURE 5: GOOGLE CALENDAR INTEGRATION
+Work events automatically sync with employee personal Google Calendars. Employees click Connect Google Calendar in their profile, grant permission, and from then on events are automatically added. Three types of events sync: Project events including start dates and deadlines, Task events showing due dates, and Leave events as all-day events when approved. When projects are deleted or dates updated, calendar events are automatically removed or updated. Each employee controls their own calendar connection and can disconnect anytime.
+
+SECURITY AND ACCESS CONTROL
+Every user has a unique username and password. Employee usernames are their Employee ID while admins have superuser accounts. First-time login requires a password change. Admins can see everything and create, edit, or delete anything. Employees can only see their own information, assigned projects, their own tasks, and can only apply for their own leave. If an employee tries to access an admin page, they are redirected with an error message.
+
+DATA STORAGE
+The system stores employee records including personal information, work details, encrypted passwords, and leave balances. Project records contain details, team members, status, and progress. Task records include details, assigned employee, status, priority, completion information, and time tracking. Leave records store applications, status, dates, approval or rejection information, and admin remarks. Calendar credentials store encrypted Google Calendar tokens for employees who connected.
+
+KEY RELATIONSHIPS
+Each task belongs to one employee and may belong to one project. Each project has multiple collaborators. Each employee has multiple leave balances with one per leave type per year. Each leave application belongs to one employee and one leave type.
+
+WORKFLOWS
+
+NEW EMPLOYEE WORKFLOW
+Admin creates employee by filling in details. System generates Employee ID automatically incrementing from last ID. System generates random 8-character password with letters and numbers. Welcome email is sent with login credentials. System creates leave balances for current year automatically. Employee receives email, logs in, and changes password on first login.
+
+PROJECT WORKFLOW
+Admin creates project with name, dates, priority, and selects team members. System saves project. For each team member with Google Calendar, system creates Project Start and Project Deadline calendar events. All team members see project in their dashboard. Admin then creates tasks for the project.
+
+TASK WORKFLOW
+Admin creates task and selects employee who must be a project team member if the task is linked to a project. System saves task as PENDING. If employee has Google Calendar, deadline is added. Employee sees task, marks it In Progress, works on it, then marks as Completed adding optional completion notes and actual hours. Status changes to COMPLETED and admin sees completion in project progress.
+
+LEAVE WORKFLOW
+Employee applies for leave by selecting type, dates, and writing reason. System validates end date is after start date and enough balance is available. Application is saved as PENDING. Admin reviews request seeing employee balance and details. If approved, system deducts leave from balance, changes status to APPROVED, creates Google Calendar all-day events for each leave day if connected, and notifies employee. If rejected, balance is not deducted, status changes to REJECTED, no calendar events are created, and employee is notified with rejection reason.
+
+TECHNICAL DETAILS
+The system uses Django Python web framework with SQLite database. Frontend uses HTML and Tailwind CSS styling. Google Calendar API handles calendar integration. SMTP sends emails. Passwords are encrypted using hashing. Google OAuth2 provides secure authorization with tokens stored encrypted in database and auto-refreshed when expired. Form validation checks required fields, validates date ranges, and verifies leave balances.
+
+SYSTEM CAPABILITIES
+Admins see total employees, department breakdown, task completion rates per employee, and leave usage. They view total projects, status breakdown, completion percentages, and tasks per project. They monitor total tasks, pending versus completed, overdue tasks, and tasks by priority. They track pending leave requests, approved and rejected counts, leave type usage, and balance summaries. Employees see their total tasks assigned, completion rate, projects involved in, leave balances, and leave history.
+
+IMPORTANT NOTES
+The system automatically handles Employee ID generation by finding the highest existing ID and incrementing by one. Leave balances are created automatically when employees are added using database signals. Calendar sync happens automatically on project creation, task assignment, and leave approval. Form validation prevents invalid data entry. The system uses dark theme design with blue and purple gradients and card-based layouts. It is responsive and works on desktop, tablet, and mobile devices.
+
+System Name: STERP Software Portal
+Company: STERP Softwares

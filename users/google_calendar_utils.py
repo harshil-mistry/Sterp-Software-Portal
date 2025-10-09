@@ -4,6 +4,7 @@ Google Calendar integration utilities
 
 import json
 import logging
+from datetime import timedelta
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
@@ -368,3 +369,102 @@ class GoogleCalendarService:
                 
         except Exception as e:
             return False, f"Error deleting project events: {str(e)}"
+    
+    @classmethod
+    def create_leave_event(cls, employee, leave_application):
+        """Create a leave event in employee's calendar when leave is approved"""
+        available, error = cls._check_availability()
+        if not available:
+            return False, error
+        
+        from datetime import timedelta
+        
+        # Build event description
+        description = (
+            f'Leave Type: {leave_application.leave_type.name}\n'
+            f'Duration: {leave_application.total_days} day(s)\n'
+            f'Reason: {leave_application.reason}\n'
+            f'Approved by: {leave_application.reviewed_by.get_full_name()}\n'
+        )
+        
+        if leave_application.admin_remarks:
+            description += f'Admin Remarks: {leave_application.admin_remarks}'
+        
+        # For multi-day leaves, create an all-day event spanning the entire period
+        # Add 1 day to end_date because Google Calendar end date is exclusive
+        end_date = leave_application.end_date + timedelta(days=1)
+        
+        event_data = {
+            'summary': f'🏖️ Leave: {leave_application.leave_type.name}',
+            'description': description,
+            'start': {
+                'date': leave_application.start_date.isoformat(),
+                'timeZone': 'Asia/Kolkata',
+            },
+            'end': {
+                'date': end_date.isoformat(),
+                'timeZone': 'Asia/Kolkata',
+            },
+            'reminders': {
+                'useDefault': False,
+                'overrides': [
+                    {'method': 'email', 'minutes': 24 * 60},  # 1 day before
+                    {'method': 'popup', 'minutes': 12 * 60},  # 12 hours before
+                ],
+            },
+            'colorId': '10',  # Green color for approved leaves
+            'transparency': 'transparent',  # Mark as "free" so it doesn't block the calendar
+        }
+        
+        return cls.create_event(employee, event_data)
+    
+    @classmethod
+    def delete_leave_event(cls, employee, leave_application):
+        """Delete leave event from employee's calendar (for cancelled/rejected leaves)"""
+        available, error = cls._check_availability()
+        if not available:
+            return False, error
+            
+        service = cls.get_calendar_service(employee)
+        if not service:
+            return False, "Google Calendar not connected"
+        
+        try:
+            # Search for events related to this leave
+            events_result = service.events().list(
+                calendarId='primary',
+                q=f'Leave: {leave_application.leave_type.name}',
+                timeMin=leave_application.start_date.isoformat() + 'T00:00:00Z',
+                timeMax=(leave_application.end_date + timedelta(days=2)).isoformat() + 'T00:00:00Z',
+                maxResults=10
+            ).execute()
+            
+            events = events_result.get('items', [])
+            deleted_count = 0
+            
+            for event in events:
+                summary = event.get('summary', '')
+                description = event.get('description', '')
+                
+                # Check if this is the leave event by matching summary and description
+                if (f'Leave: {leave_application.leave_type.name}' in summary and 
+                    f'Duration: {leave_application.total_days} day(s)' in description):
+                    
+                    try:
+                        service.events().delete(
+                            calendarId='primary',
+                            eventId=event['id']
+                        ).execute()
+                        deleted_count += 1
+                        logger.info(f"Deleted leave event for {employee.get_full_name()}")
+                        break  # Only delete the first matching event
+                    except Exception as e:
+                        logger.warning(f"Failed to delete leave event {event['id']}: {str(e)}")
+            
+            if deleted_count > 0:
+                return True, "Leave event deleted from calendar"
+            else:
+                return True, "No matching leave event found to delete"
+                
+        except Exception as e:
+            return False, f"Error deleting leave event: {str(e)}"

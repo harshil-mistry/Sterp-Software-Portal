@@ -1157,6 +1157,20 @@ def approve_leave(request, pk):
             # Use the model's approve method which handles balance deduction
             application.approve(admin=request.user, remarks=remarks)
             
+            # Sync with Google Calendar if employee has it connected
+            try:
+                calendar_success, calendar_message = GoogleCalendarService.create_leave_event(
+                    application.employee, 
+                    application
+                )
+                if calendar_success:
+                    logger.info(f"Leave synced to Google Calendar: {calendar_message}")
+                else:
+                    logger.warning(f"Could not sync to calendar: {calendar_message}")
+            except Exception as calendar_error:
+                logger.error(f"Error syncing leave to calendar: {str(calendar_error)}")
+                # Don't fail the approval if calendar sync fails
+            
             messages.success(
                 request,
                 f'Leave application approved! {application.total_days} day(s) of '
