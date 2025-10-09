@@ -12,7 +12,7 @@ class Employee(AbstractUser):
         ('SALES', 'Sales'),
     ]
     
-    employee_id = models.CharField(max_length=10, unique=True, null=True, blank=True)
+    employee_id = models.CharField(max_length=20, unique=True, null=True, blank=True)  # Increased to 20 to accommodate STERPEMP001 format
     date_of_birth = models.DateField(null=True, blank=True)
     phone_number = models.CharField(max_length=15, blank=True)
     address = models.TextField(blank=True)
